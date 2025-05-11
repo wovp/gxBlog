@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  # 后端服务
+  backend:
+    build: ./backend
+    container_name: gxblog-backend
+    restart: always
+    volumes:
+      - ./backend:/app
+      - ./backend/.env:/app/.env
+    ports:
+      - "8000:8000"
+    networks:
+      - gxblog-network
+
+  # 前端服务
+  frontend:
+    build: ./gxBlog
+    container_name: gxblog-frontend
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - gxblog-network
+
+# 网络配置
+networks:
+  gxblog-network:
+    driver: bridge
+
+# 注意：在部署前，请确保：
+# 1. 在backend目录中创建了.env文件，包含必要的环境变量
+# 2. 在gxBlog目录中创建了nginx.conf文件，用于配置前端服务器
+# 3. 如果需要持久化数据，可以添加volumes配置
