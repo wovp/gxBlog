@@ -1,0 +1,22 @@
+# FastAPI后端依赖
+fastapi>=0.95.0
+uvicorn>=0.21.0
+pydantic>=1.10.7
+python-dotenv>=1.0.0
+apscheduler>=3.10.1  # 定时任务调度
+
+# 数据库相关
+sqlalchemy>=2.0.9
+mysql-connector-python>=8.0.32
+pymysql>=1.0.3
+
+# Git操作
+gitpython>=3.1.31
+
+# Markdown处理
+markdown>=3.4.3
+pygments>=2.15.0  # 用于代码高亮
+
+# 工具库
+python-multipart>=0.0.6  # 用于处理表单数据
+email-validator>=2.0.0  # 用于验证邮箱

@@ -1,0 +1,26 @@
+# 敏感信息文件
+backend/.env
+backend/.env.local
+
+
+# 日志文件
+*.log
+
+# 内容目录
+content/
+
+# 依赖目录
+node_modules/
+
+# 构建输出
+dist/
+dist-ssr/
+
+# 编辑器目录
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# 系统文件
+.DS_Store
+Thumb.db

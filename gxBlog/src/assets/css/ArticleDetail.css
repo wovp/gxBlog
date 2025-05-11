@@ -1,0 +1,521 @@
+/* ArticleDetail.css */
+
+.article-detail-page {
+    max-width: 1350px;
+    margin: 0 auto;
+    padding: 0.8rem;
+    padding-bottom: 3rem;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    overflow: visible;
+    /* 确保不会限制内部元素的sticky定位 */
+}
+
+/* 文章详情布局 - 包含目录和内容容器 */
+.article-detail-layout {
+    display: block;
+    position: relative;
+    width: 100%;
+}
+
+/* 外部目录样式 - 完全位于文章外部，更靠左 */
+.toc-outside {
+    position: fixed !important;
+    left: calc(50% - 1050px) !important;
+    /* 调整位置，更靠左，确保不遮挡文章内容 */
+    top: 80px !important;
+    /* 距离顶部的距离，可以根据需要调整 */
+    width: 240px;
+    max-height: calc(100vh - 100px);
+    overflow-y: auto;
+    padding: 1rem 0.5rem;
+    z-index: 100;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+}
+
+/* 响应式布局 */
+@media (max-width: 1600px) {
+    .toc-outside {
+        left: 40px !important;
+    }
+}
+
+@media (max-width: 1400px) {
+    .toc-outside {
+        left: 20px !important;
+    }
+}
+
+@media (max-width: 1200px) {
+    .article-detail-layout .article-container {
+        max-width: 100% !important;
+    }
+}
+
+@media (max-width: 992px) {
+    .toc-outside {
+        width: 200px;
+        left: 10px !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .toc-outside {
+        position: static !important;
+        width: 100%;
+        max-height: 300px;
+        margin-bottom: 20px;
+    }
+
+    .article-detail-layout .article-container {
+        margin-top: 20px;
+    }
+}
+
+/* 文章容器样式 - 居中显示，不再为目录留出空间 */
+.article-detail-layout .article-container {
+    margin-left: auto !important;
+    margin-right: auto !important;
+    /* 居中对齐 */
+    width: 100% !important;
+    max-width: 1200px !important;
+    /* 设置最大宽度 */
+}
+
+/* 加载状态 */
+.loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 0;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    border-radius: 50%;
+    border-top-color: #3498db;
+    animation: spin 1s ease-in-out infinite;
+    margin-bottom: 1rem;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* 文章容器 */
+.article-container {
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    overflow: visible;
+    /* 修改为visible，确保不会限制内部元素的sticky定位 */
+    position: relative;
+    /* 添加相对定位，为内部的sticky定位创建参考点 */
+    width: 100%;
+    /* 确保容器占满页面宽度 */
+    max-width: 1200px;
+    /* 设置最大宽度，使内容不会过宽 */
+    margin: 0 auto;
+    /* 居中对齐 */
+    box-sizing: border-box;
+    /* 确保内边距计入宽度 */
+}
+
+/* 文章头部 */
+.article-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.article-title {
+    font-size: 2.2rem;
+    color: #2c3e50;
+    margin-bottom: 1rem;
+    line-height: 1.3;
+}
+
+.article-meta {
+    display: flex;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+    color: #7f8c8d;
+    font-size: 0.9rem;
+}
+
+.article-meta span {
+    margin-right: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.article-tags {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.tag {
+    background-color: #e1f5fe;
+    color: #0288d1;
+    padding: 0.3rem 0.6rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    margin-right: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+/* 文章封面图 */
+.article-cover {
+    width: 100%;
+    max-width: 100%;
+    height: 400px;
+    overflow: hidden !important;
+    border-radius: 0 0 8px 8px;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    box-sizing: border-box;
+}
+
+.article-cover img {
+    width: 100%;
+    max-width: 100% !important;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+    box-sizing: border-box;
+}
+
+.article-cover:hover img {
+    transform: scale(1.02);
+}
+
+/* 文章内容和目录布局 */
+.article-content-wrapper {
+    display: flex;
+    margin-top: 2rem;
+    position: relative;
+    flex-wrap: wrap;
+    /* 允许在小屏幕上换行 */
+    align-items: flex-start;
+    /* 确保子元素从顶部对齐 */
+    justify-content: flex-start;
+    /* 从左侧开始排列元素 */
+    gap: 1.5rem;
+    /* 减少间距 */
+    min-height: 100vh;
+    /* 确保内容区域有足够的高度，使sticky定位生效 */
+    width: 100%;
+    /* 确保内容包装器占满容器宽度 */
+    box-sizing: border-box;
+    /* 确保内边距计入宽度 */
+    padding: 0 0.5rem;
+    /* 添加少量内边距 */
+    overflow: hidden;
+    /* 防止内容溢出 */
+}
+
+/* 文章内容样式 */
+.article-content {
+    flex: 1;
+    /* 占据剩余空间 */
+    min-width: 0;
+    /* 防止内容溢出 */
+    width: 100%;
+    /* 确保内容占满容器宽度 */
+    padding: 0 1rem 2rem;
+    /* 添加内边距 */
+    box-sizing: border-box;
+    /* 确保内边距计入宽度 */
+    overflow: visible;
+    /* 移除overflow: hidden，避免图片被裁剪 */
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    padding: 0.5rem;
+}
+
+/* 确保图片不会溢出 - 全局规则 */
+.article-content img,
+.article-content .article-image,
+.article-content p img,
+.article-content * img {
+    max-width: 100% !important;
+    width: auto !important;
+    height: auto !important;
+    display: block;
+    margin: 0 auto;
+    border-radius: 6px;
+    transition: transform 0.3s ease;
+    box-sizing: border-box;
+    /* 移除object-fit属性，让图片自然缩放 */
+}
+
+/* 大图片处理 */
+.article-content .image-container img {
+    max-width: 100% !important;
+    width: auto !important;
+    max-height: none;
+}
+
+/* 图片悬停效果 */
+.article-content .image-container:hover img {
+    transform: scale(1.01);
+}
+
+/* Markdown样式优化 */
+.article-content h1 {
+    font-size: 1.9rem;
+    margin-top: 1.8rem;
+    margin-bottom: 0.9rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid #eaecef;
+    color: #2c3e50;
+    width: 100%;
+    /* 确保标题占满宽度 */
+}
+
+.article-content h2 {
+    font-size: 1.65rem;
+    margin-top: 1.6rem;
+    margin-bottom: 0.7rem;
+    padding-bottom: 0.3rem;
+    border-bottom: 1px solid #eaecef;
+    color: #2c3e50;
+    width: 100%;
+    /* 确保标题占满宽度 */
+}
+
+.article-content h3 {
+    font-size: 1.4rem;
+    margin-top: 1.4rem;
+    margin-bottom: 0.7rem;
+    color: #2c3e50;
+    width: 100%;
+    /* 确保标题占满宽度 */
+}
+
+.article-content p {
+    margin: 0.8rem 0;
+    line-height: 1.7;
+    max-width: 100%;
+    /* 确保段落占满可用宽度 */
+}
+
+.article-content a {
+    color: #0366d6;
+    text-decoration: none;
+}
+
+.article-content a:hover {
+    text-decoration: underline;
+}
+
+.article-content ul,
+.article-content ol {
+    padding-left: 1.8rem;
+    margin: 0.8rem 0;
+    width: 100%;
+    /* 确保列表占满宽度 */
+    box-sizing: border-box;
+    /* 确保内边距计入宽度 */
+}
+
+.article-content li {
+    margin: 0.4rem 0;
+    line-height: 1.6;
+    /* 减小列表项行高 */
+}
+
+.article-content blockquote {
+    padding: 0.5rem 1rem;
+    color: #6a737d;
+    border-left: 0.25rem solid #dfe2e5;
+    margin: 1rem 0;
+    background-color: #f6f8fa;
+}
+
+.article-content pre {
+    margin: 1.5rem 0;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    max-height: 500px;
+    overflow: auto;
+    background-color: #2d2d2d;
+    /* 与prism-tomorrow主题匹配 */
+}
+
+.article-content code {
+    font-family: 'Fira Code', Consolas, Monaco, 'Andale Mono', monospace;
+    padding: 0.2em 0.4em;
+    margin: 0;
+    font-size: 85%;
+    background-color: rgba(27, 31, 35, 0.05);
+    border-radius: 3px;
+}
+
+.article-content pre code {
+    padding: 0;
+    background-color: transparent;
+    border-radius: 0;
+    font-size: 90%;
+    font-family: 'Fira Code', Consolas, Monaco, 'Andale Mono', monospace;
+}
+
+/* 行号样式优化 */
+.article-content .line-numbers .line-numbers-rows {
+    border-right: 1px solid rgba(255, 255, 255, 0.2);
+    padding-right: 0.5rem;
+}
+
+/* 工具栏样式优化 */
+.article-content .toolbar-item button {
+    color: #ccc;
+    font-size: 0.8rem;
+    padding: 0.2rem 0.5rem;
+    background: #444;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.article-content .toolbar-item button:hover {
+    background: #555;
+    color: #fff;
+}
+
+/* 代码块内部间距优化 */
+.article-content pre[class*="language-"] {
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+}
+
+/* 行高亮效果 */
+.article-content .line-highlight {
+    background: rgba(255, 255, 255, 0.1);
+    margin-top: 0.5rem;
+}
+
+.article-content .image-container {
+    margin: 1.5rem 0;
+    text-align: center;
+    max-width: 100% !important;
+    overflow: hidden !important;
+    box-sizing: border-box;
+    display: block;
+}
+
+.article-content .article-image {
+    max-width: 100%;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.article-content table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1rem 0;
+    overflow-x: auto;
+    display: block;
+}
+
+.article-content table th,
+.article-content table td {
+    border: 1px solid #dfe2e5;
+    padding: 0.6rem 1rem;
+    text-align: left;
+}
+
+.article-content table th {
+    background-color: #f6f8fa;
+    font-weight: 600;
+}
+
+.article-content table tr:nth-child(2n) {
+    background-color: #f8f8f8;
+}
+
+.article-content hr {
+    height: 0.25rem;
+    padding: 0;
+    margin: 1.5rem 0;
+    background-color: #e1e4e8;
+    border: 0;
+}
+
+/* 错误信息样式 */
+.error-message {
+    text-align: center;
+    padding: 3rem 1rem;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    max-width: 600px;
+    margin: 2rem auto;
+}
+
+.error-icon {
+    font-size: 3rem;
+    color: #e74c3c;
+    margin-bottom: 1rem;
+}
+
+.error-message h2 {
+    color: #2c3e50;
+    margin-bottom: 1rem;
+}
+
+.error-message p {
+    color: #7f8c8d;
+    margin-bottom: 2rem;
+}
+
+.back-btn,
+.retry-btn {
+    background-color: #3498db;
+    color: white;
+    border: none;
+    padding: 0.8rem 1.5rem;
+    margin: 0 0.5rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background-color 0.3s;
+}
+
+.back-btn:hover,
+.retry-btn:hover {
+    background-color: #2980b9;
+}
+
+.retry-btn {
+    background-color: #2ecc71;
+}
+
+.retry-btn:hover {
+    background-color: #27ae60;
+}
+
+/* 响应式样式 */
+@media (max-width: 768px) {
+    .article-header {
+        padding: 1.5rem;
+    }
+
+    .article-title {
+        font-size: 1.8rem;
+    }
+
+    .article-content {
+        padding: 1.5rem;
+        font-size: 1rem;
+    }
+
+    .article-cover {
+        height: 250px;
+    }
+}

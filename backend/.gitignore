@@ -1,0 +1,47 @@
+# Python字节码文件
+__pycache__/
+*.py[cod]
+*$py.class
+
+# 虚拟环境
+venv/
+env/
+ENV/
+.env
+
+# 日志文件
+*.log
+app.log
+
+# 数据库文件
+*.sqlite3
+*.db
+
+# 测试覆盖率报告
+.coverage
+htmlcov/
+.pytest_cache/
+coverage_html/
+
+# IDE相关文件
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# 本地配置文件
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# 临时文件
+tmp/
+temp/
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 内容目录（可选，取决于是否需要版本控制content目录）
+content/
