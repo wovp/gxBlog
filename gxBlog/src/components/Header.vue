@@ -20,6 +20,9 @@ const handleSelect = (key: string) => {
     case '3':
       router.push('/about')
       break
+    case '4':
+      router.push('/homepage')
+      break
   }
 }
 </script>
@@ -49,6 +52,11 @@ const handleSelect = (key: string) => {
           <li>
             <a href="#" @click.prevent="handleSelect('3')" :class="{ active: activeIndex === '3' }">
               <span class="nav-icon">👋</span> <span class="nav-text">关于</span>
+            </a>
+          </li>
+          <li>
+            <a href="#" @click.prevent="handleSelect('4')" :class="{ active: activeIndex === '4' }">
+              <span class="nav-icon">👋</span> <span class="nav-text">个人主页</span>
             </a>
           </li>
         </ul>

@@ -7,6 +7,14 @@ const routes = [
     component: () => import('../views/Home.vue')
   },
   {
+    path: '/homepage',
+    name: 'Homepage',
+    beforeEnter: (to, from, next) => {
+      // 跳转到独立部署的homepage
+      window.location.href = '/public/homepage/dist/index.html';
+    }
+  },
+  {
     path: '/articles',
     name: 'ArticleList',
     component: () => import('../views/ArticleListDemo.vue') // 使用功能更完整的组件

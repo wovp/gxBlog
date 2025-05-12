@@ -1,0 +1,45 @@
+{
+	"head": {
+		"title": "Gx",
+		"description": "Author:Gx,Category:Personal Blog",
+		"favicon": "favicon.ico"
+	},
+	"intro": {
+		"title": "Gx",
+		"subtitle": "爱折腾的普通人的博客",
+		"enter": "enter",
+		"supportAuthor": true,
+		"background": true
+	},
+	"main": {
+		"name": "Gx",
+		"signature": "Code & Input & Output",
+		"avatar": {
+			"link": "assets/avatar.jpg",
+			"height": "100",
+			"width": "100"
+		},
+		"ul": {
+			"first": {
+				"href": "/",
+				"icon": "bokeyuan",
+				"text": "Blog"
+			},
+			"second": {
+				"href": "/",
+				"icon": "xiaolian",
+				"text": "About"
+			},
+			"third": {
+				"href": "zhiqqwwgg@gmail.com",
+				"icon": "email",
+				"text": "Email"
+			},
+			"fourth": {
+				"href": "https://github.com/wovp",
+				"icon": "github",
+				"text": "Github"
+			}
+		}
+	}
+}

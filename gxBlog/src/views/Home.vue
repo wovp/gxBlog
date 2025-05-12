@@ -104,23 +104,39 @@ onMounted(() => {
         <button @click="fetchLatestArticles" class="debug-reload">重新加载数据</button>
       </div>
     </div>
-    <!-- 英雄区域 -->
+    <!-- 英雄区域 - 重新设计为更简约高级的风格 -->
     <section class="hero">
       <div class="hero-content">
+        <div class="hero-icon">✨</div>
         <h1 class="hero-title">欢迎来到我的博客</h1>
         <p class="hero-subtitle">分享技术、知识和个人见解</p>
-        <button class="hero-button" @click="$router.push('/articles')">浏览文章</button>
+        <button class="hero-button" @click="$router.push('/articles')">
+          <span>浏览文章</span>
+          <span class="button-icon">→</span>
+        </button>
+      </div>
+      <div class="hero-decoration">
+        <div class="hero-circle hero-circle-1"></div>
+        <div class="hero-circle hero-circle-2"></div>
+        <div class="hero-circle hero-circle-3"></div>
       </div>
     </section>
 
-    <!-- 文章列表入口 -->
-    <section class="demo-entry">
-      <div class="demo-card" @click="$router.push('/articles')">
-        <div class="demo-icon">🔍</div>
-        <div class="demo-content">
-          <h2 class="demo-title">文章列表</h2>
-          <p class="demo-desc">浏览所有文章，支持分类、搜索功能</p>
-          <button class="demo-btn">立即浏览</button>
+    <!-- 特色功能区 - 替换原来的文章列表入口 -->
+    <section class="features-section">
+      <div class="feature-card" @click="$router.push('/articles')">
+        <div class="feature-icon">📚</div>
+        <div class="feature-content">
+          <h2 class="feature-title">文章列表</h2>
+          <p class="feature-desc">浏览所有文章，按分类查找</p>
+        </div>
+      </div>
+
+      <div class="feature-card" @click="$router.push('/about')">
+        <div class="feature-icon">👋</div>
+        <div class="feature-content">
+          <h2 class="feature-title">关于我</h2>
+          <p class="feature-desc">了解博主的技术栈和经历</p>
         </div>
       </div>
     </section>
@@ -147,8 +163,8 @@ onMounted(() => {
           <img :src="getRandomAvatarImage()" alt="博主头像" />
         </div>
         <div class="about-text">
-          <p>你好，我是一名热爱技术的开发者，专注于前端和全栈开发。这个博客是我分享技术见解、学习心得和个人项目的地方。</p>
-          <p>我擅长Vue、React、Node.js等技术栈，喜欢探索新技术和最佳实践。希望通过这个博客，能与更多志同道合的朋友交流学习。</p>
+          <p>你好，我是一名热爱技术的开发者。这个博客是我分享技术见解、学习心得和个人项目的地方。</p>
+          <p>喜欢探索新技术和最佳实践。希望通过这个博客，能与更多志同道合的朋友交流学习。</p>
           <button class="about-button" @click="$router.push('/about')">了解更多</button>
         </div>
       </div>
@@ -211,141 +227,247 @@ onMounted(() => {
   padding-bottom: 3rem;
 }
 
-/* 英雄区域样式 */
+/* 英雄区域样式 - 更简约高级的设计 */
 .hero {
-  background: linear-gradient(135deg, #3498db, #8e44ad);
+  background: linear-gradient(135deg, #a6c0fe, #f68084);
   color: white;
-  padding: 5rem 2rem;
+  padding: 6rem 2rem;
   text-align: center;
-  border-radius: 8px;
+  border-radius: 16px;
   margin-bottom: 3rem;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(166, 192, 254, 0.3);
+  transition: all 0.5s ease;
+}
+
+.hero:hover {
+  box-shadow: 0 15px 40px rgba(166, 192, 254, 0.4);
+  transform: translateY(-5px);
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+}
+
+.hero-icon {
+  font-size: 2.5rem;
+  margin-bottom: 1.5rem;
+  animation: float 3s ease-in-out infinite;
+  display: inline-block;
+}
+
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
 }
 
 .hero-title {
-  font-size: 2.5rem;
+  font-size: 3rem;
   margin-bottom: 1rem;
-  font-weight: 700;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  background: linear-gradient(to right, #ffffff, #f0f0f0);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
 .hero-subtitle {
-  font-size: 1.2rem;
-  margin-bottom: 2rem;
+  font-size: 1.3rem;
+  margin-bottom: 2.5rem;
   opacity: 0.9;
+  font-weight: 300;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .hero-button {
   background-color: white;
-  color: #3498db;
+  color: #f68084;
   border: none;
-  padding: 0.8rem 2rem;
+  padding: 1rem 2.5rem;
   font-size: 1.1rem;
-  border-radius: 4px;
+  border-radius: 50px;
   cursor: pointer;
   font-weight: 600;
-  transition: transform 0.3s, box-shadow 0.3s;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
 }
 
 .hero-button:hover {
   transform: translateY(-3px);
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  background-color: #fafafa;
 }
 
-/* 文章示例入口样式 */
-.demo-entry {
-  margin-bottom: 3rem;
+.button-icon {
+  transition: transform 0.3s ease;
 }
 
-.demo-card {
-  background: linear-gradient(135deg, #ff69b4, #ffb6c1);
-  border-radius: 12px;
+.hero-button:hover .button-icon {
+  transform: translateX(5px);
+}
+
+.hero-decoration {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  overflow: hidden;
+}
+
+.hero-circle {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.hero-circle-1 {
+  width: 300px;
+  height: 300px;
+  top: -100px;
+  right: -50px;
+}
+
+.hero-circle-2 {
+  width: 200px;
+  height: 200px;
+  bottom: -50px;
+  left: -50px;
+}
+
+.hero-circle-3 {
+  width: 100px;
+  height: 100px;
+  top: 50%;
+  left: 30%;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* 特色功能区样式 */
+.features-section {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2rem;
+  margin-bottom: 4rem;
+}
+
+.feature-card {
+  background: white;
+  border-radius: 16px;
   padding: 2rem;
   display: flex;
   align-items: center;
-  gap: 2rem;
-  color: white;
-  box-shadow: 0 8px 20px rgba(255, 105, 180, 0.3);
+  gap: 1.5rem;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
   cursor: pointer;
   transition: all 0.3s ease;
+  border: 1px solid #f0f0f0;
 }
 
-.demo-card:hover {
+.feature-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 12px 25px rgba(255, 105, 180, 0.4);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  border-color: #e0e0e0;
 }
 
-.demo-icon {
-  font-size: 4rem;
-  background-color: rgba(255, 255, 255, 0.2);
-  width: 100px;
-  height: 100px;
+.feature-icon {
+  font-size: 2.5rem;
+  background-color: #fef5f5;
+  color: #f68084;
+  width: 70px;
+  height: 70px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-}
-
-.demo-content {
-  flex: 1;
-}
-
-.demo-title {
-  font-size: 1.8rem;
-  margin-bottom: 0.5rem;
-  font-weight: 700;
-}
-
-.demo-desc {
-  font-size: 1.1rem;
-  margin-bottom: 1.5rem;
-  opacity: 0.9;
-}
-
-.demo-btn {
-  background-color: white;
-  color: #ff69b4;
-  border: none;
-  padding: 0.8rem 2rem;
-  font-size: 1rem;
-  border-radius: 30px;
-  font-weight: 600;
-  cursor: pointer;
+  border-radius: 16px;
   transition: all 0.3s ease;
 }
 
-.demo-btn:hover {
-  background-color: #f8f8f8;
-  transform: translateY(-2px);
-  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+.feature-card:hover .feature-icon {
+  transform: scale(1.1) rotate(5deg);
+}
+
+.feature-card:nth-child(2) .feature-icon {
+  background-color: #f0f7ff;
+  color: #a6c0fe;
+}
+
+.feature-content {
+  flex: 1;
+}
+
+.feature-title {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.feature-desc {
+  font-size: 1rem;
+  color: #666;
+  line-height: 1.5;
 }
 
 @media (max-width: 768px) {
-  .demo-card {
-    flex-direction: column;
-    text-align: center;
-    gap: 1rem;
+  .features-section {
+    grid-template-columns: 1fr;
+  }
+
+  .feature-card {
     padding: 1.5rem;
   }
 
-  .demo-icon {
-    width: 80px;
-    height: 80px;
-    font-size: 3rem;
+  .feature-icon {
+    width: 60px;
+    height: 60px;
+    font-size: 2rem;
   }
 
-  .demo-title {
-    font-size: 1.5rem;
+  .hero-title {
+    font-size: 2.2rem;
+  }
+
+  .hero-subtitle {
+    font-size: 1.1rem;
   }
 }
 
-/* 精选文章样式 */
+/* 最新文章样式 - 更简约高级的设计 */
 .section-title {
-  font-size: 1.8rem;
-  margin-bottom: 2rem;
+  font-size: 2rem;
+  margin-bottom: 2.5rem;
   text-align: center;
-  color: #2c3e50;
+  color: #333;
   position: relative;
-  padding-bottom: 0.5rem;
+  padding-bottom: 0.8rem;
+  font-weight: 700;
+}
+
+.section-title::before {
+  content: '✨';
+  position: absolute;
+  top: -15px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 1.2rem;
+  opacity: 0.7;
 }
 
 .section-title::after {
@@ -354,23 +476,30 @@ onMounted(() => {
   bottom: 0;
   left: 50%;
   transform: translateX(-50%);
-  width: 50px;
+  width: 60px;
   height: 3px;
-  background-color: #3498db;
+  background: linear-gradient(to right, #a6c0fe, #f68084);
+  border-radius: 3px;
 }
 
 .featured-articles {
-  margin-bottom: 3rem;
+  margin-bottom: 4rem;
+  padding: 0 1rem;
 }
 
 .article-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 2rem;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 2.5rem;
 }
 
 .article-item {
   height: 100%;
+  transition: all 0.3s ease;
+}
+
+.article-item:hover {
+  transform: translateY(-5px);
 }
 
 /* 加载状态 */
@@ -379,17 +508,24 @@ onMounted(() => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 3rem 0;
+  padding: 4rem 0;
 }
 
 .spinner {
-  width: 40px;
-  height: 40px;
-  border: 4px solid rgba(0, 0, 0, 0.1);
+  width: 50px;
+  height: 50px;
+  border: 3px solid rgba(166, 192, 254, 0.2);
   border-radius: 50%;
-  border-top-color: #3498db;
+  border-top-color: #f68084;
   animation: spin 1s ease-in-out infinite;
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+}
+
+.loading p {
+  color: #666;
+  font-size: 1.1rem;
+  font-weight: 500;
 }
 
 @keyframes spin {
@@ -398,30 +534,91 @@ onMounted(() => {
   }
 }
 
-/* 关于博主样式 */
+@media (max-width: 768px) {
+  .article-grid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+
+  .section-title {
+    font-size: 1.8rem;
+  }
+}
+
+/* 关于博主样式 - 更简约高级的设计 */
 .about-section {
-  background-color: #f8f9fa;
-  padding: 3rem 2rem;
-  border-radius: 8px;
+  background-color: #fff;
+  padding: 4rem 2rem;
+  border-radius: 16px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.03);
+  border: 1px solid #f0f0f0;
+  margin-top: 2rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.about-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 5px;
+  background: linear-gradient(to right, #a6c0fe, #f68084);
 }
 
 .about-content {
   display: flex;
   align-items: center;
-  gap: 2rem;
+  gap: 3rem;
 }
 
 .about-image {
   flex-shrink: 0;
+  position: relative;
+}
+
+.about-image::after {
+  content: '👋';
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  font-size: 2rem;
+  animation: wave 2.5s ease-in-out infinite;
+  transform-origin: 70% 70%;
+}
+
+@keyframes wave {
+
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+
+  20%,
+  60% {
+    transform: rotate(15deg);
+  }
+
+  40%,
+  80% {
+    transform: rotate(0deg);
+  }
 }
 
 .about-image img {
-  width: 200px;
-  height: 200px;
-  border-radius: 50%;
+  width: 180px;
+  height: 180px;
+  border-radius: 24px;
   object-fit: cover;
   border: 5px solid white;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 10px 25px rgba(166, 192, 254, 0.2);
+  transition: all 0.3s ease;
+}
+
+.about-image:hover img {
+  transform: scale(1.05);
+  box-shadow: 0 15px 35px rgba(166, 192, 254, 0.3);
 }
 
 .about-text {
@@ -429,25 +626,53 @@ onMounted(() => {
 }
 
 .about-text p {
-  margin-bottom: 1rem;
-  line-height: 1.6;
-  color: #34495e;
+  margin-bottom: 1.2rem;
+  line-height: 1.8;
+  color: #555;
+  font-size: 1.05rem;
 }
 
 .about-button {
-  background-color: #3498db;
+  background: linear-gradient(to right, #a6c0fe, #f68084);
   color: white;
   border: none;
-  padding: 0.6rem 1.5rem;
+  padding: 0.8rem 2rem;
   font-size: 1rem;
-  border-radius: 4px;
+  border-radius: 50px;
   cursor: pointer;
-  transition: background-color 0.3s;
-  margin-top: 1rem;
+  transition: all 0.3s ease;
+  margin-top: 1.5rem;
+  box-shadow: 0 5px 15px rgba(166, 192, 254, 0.3);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .about-button:hover {
-  background-color: #2980b9;
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(166, 192, 254, 0.4);
+}
+
+.about-button::after {
+  content: '→';
+  transition: transform 0.3s ease;
+}
+
+.about-button:hover::after {
+  transform: translateX(5px);
+}
+
+@media (max-width: 768px) {
+  .about-content {
+    flex-direction: column;
+    text-align: center;
+    gap: 2rem;
+  }
+
+  .about-image img {
+    width: 150px;
+    height: 150px;
+  }
 }
 
 /* 响应式设计 */
