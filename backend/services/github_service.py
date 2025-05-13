@@ -13,6 +13,38 @@ from services import article_service
 
 logger = logging.getLogger(__name__)
 
+# 从环境变量获取黑名单配置
+# 格式：逗号分隔的目录名或文件名，支持通配符
+BLACKLIST_DIRS = os.getenv("BLACKLIST_DIRS", "").split(",")
+BLACKLIST_FILES = os.getenv("BLACKLIST_FILES", "").split(",")
+BLACKLIST_KEYWORDS = os.getenv("BLACKLIST_KEYWORDS", "").split(",")
+
+# 清理空字符串
+BLACKLIST_DIRS = [d.strip() for d in BLACKLIST_DIRS if d.strip()]
+BLACKLIST_FILES = [f.strip() for f in BLACKLIST_FILES if f.strip()]
+BLACKLIST_KEYWORDS = [k.strip() for k in BLACKLIST_KEYWORDS if k.strip()]
+
+def is_blacklisted(path: str, content: str = None) -> bool:
+    """
+    检查路径是否在黑名单中
+    """
+    # 检查目录是否在黑名单中
+    for blacklist_dir in BLACKLIST_DIRS:
+        # 支持通配符匹配
+        if re.search(blacklist_dir, path):
+            logger.info(f"目录 {path} 在黑名单中，已跳过")
+            return True
+    
+    # 检查文件是否在黑名单中
+    file_name = os.path.basename(path)
+    for blacklist_file in BLACKLIST_FILES:
+        # 支持通配符匹配
+        if re.search(blacklist_file, file_name):
+            logger.info(f"文件 {file_name} 在黑名单中，已跳过")
+            return True
+    
+    return False
+
 def sync_repository(repo_url: str, target_dir: str, db: Session) -> None:
     """
     从GitHub拉取代码并解析文件夹结构
@@ -99,7 +131,7 @@ def sync_repository(repo_url: str, target_dir: str, db: Session) -> None:
                         progress=progress_printer
                     )
                     logger.info("克隆完成")
-                    return repo
+                    # return repo
                 except git.GitCommandError as e:
                     retry_count += 1
                     if "Failed to connect" in str(e) and retry_count < max_retries:
@@ -145,8 +177,8 @@ def sync_repository(repo_url: str, target_dir: str, db: Session) -> None:
             # 只处理变更的文件
             logger.info(f"开始处理{len(changed_files)}个变更文件")
             for file_path in changed_files:
-                # 只处理.md文件
-                if file_path.endswith(".md") and os.path.exists(file_path):
+                # 只处理.md文件，并且不在黑名单中
+                if file_path.endswith(".md") and os.path.exists(file_path) and not is_blacklisted(file_path):
                     # 获取文件所在目录
                     dir_path = os.path.dirname(file_path)
                     # 获取目录名作为分类名
@@ -255,8 +287,8 @@ def process_directory(directory: str, db: Session) -> None:
     """
     logger.info(f"处理目录: {directory}")
     
-    # 跳过.git目录
-    if ".git" in directory or ".ignore" in directory or directory == "":
+    # 跳过.git目录和黑名单目录
+    if ".git" in directory or ".ignore" in directory or directory == "" or is_blacklisted(directory):
         return
     
     # 获取目录名作为分类名
@@ -286,6 +318,10 @@ def process_directory(directory: str, db: Session) -> None:
     for item in os.listdir(directory):
         item_path = os.path.join(directory, item)
         
+        # 跳过黑名单项
+        if is_blacklisted(item_path):
+            continue
+        
         if os.path.isdir(item_path):
             # 递归处理子目录
             process_directory(item_path, db)
@@ -302,6 +338,10 @@ def process_markdown_file(file_path: str, category_id: int, db: Session) -> None
         # 读取文件内容
         with open(file_path, "r", encoding="utf-8") as f:
             content = f.read()
+        
+        # 检查文件路径是否在黑名单中
+        if is_blacklisted(file_path):
+            return
         
         # 提取标题（使用第一个#标记的行作为标题）
         title_match = re.search(r'^#\s+(.+)$', content, re.MULTILINE)
