@@ -49,6 +49,10 @@ def sync_repository(repo_url: str, target_dir: str, db: Session) -> None:
     """
     从GitHub拉取代码并解析文件夹结构
     """
+    # 记录同步开始时间
+    sync_start_time = datetime.now()
+    logger.info(f"开始同步任务，时间: {sync_start_time.strftime('%Y-%m-%d %H:%M:%S')}")
+    
     try:
         # 更新同步状态为运行中
         update_sync_status(db, "running", f"开始从 {repo_url} 同步数据", repo_url, target_dir)
@@ -207,12 +211,28 @@ def sync_repository(repo_url: str, target_dir: str, db: Session) -> None:
                     # 处理Markdown文件
                     process_markdown_file(file_path, category.id, db)
         
+        # 计算同步总耗时
+        sync_end_time = datetime.now()
+        sync_elapsed_time = (sync_end_time - sync_start_time).total_seconds()
+        
         # 更新同步状态为完成
-        update_sync_status(db, "completed", "同步完成")
+        completion_message = f"同步完成，总耗时: {sync_elapsed_time:.2f} 秒"
+        logger.info(completion_message)
+        update_sync_status(db, "completed", completion_message)
         
     except Exception as e:
-        logger.error(f"同步失败: {str(e)}")
-        update_sync_status(db, "failed", f"同步失败: {str(e)}")
+        # 计算同步失败时的总耗时
+        sync_end_time = datetime.now()
+        sync_elapsed_time = (sync_end_time - sync_start_time).total_seconds()
+        
+        error_message = f"同步失败: {str(e)}, 耗时: {sync_elapsed_time:.2f} 秒"
+        logger.error(error_message)
+        
+        # 记录详细错误信息
+        import traceback
+        logger.error(f"同步详细错误: {traceback.format_exc()}")
+        
+        update_sync_status(db, "failed", error_message)
         raise
 
 def update_sync_status(db: Session, status: str, message: str, repo_url: str = None, target_dir: str = None) -> None:
@@ -289,7 +309,11 @@ def process_directory(directory: str, db: Session) -> None:
     
     # 跳过.git目录和黑名单目录
     if ".git" in directory or ".ignore" in directory or directory == "" or is_blacklisted(directory):
+        logger.debug(f"跳过目录: {directory}")
         return
+        
+    # 记录开始处理时间
+    start_time = datetime.now()
     
     # 获取目录名作为分类名
     dir_name = os.path.basename(directory)
@@ -315,29 +339,58 @@ def process_directory(directory: str, db: Session) -> None:
         db.refresh(category)
     
     # 遍历目录中的所有文件和子目录
-    for item in os.listdir(directory):
+    items = os.listdir(directory)
+    total_items = len(items)
+    logger.info(f"目录 {directory} 中共有 {total_items} 个项目待处理")
+    
+    processed_dirs = 0
+    processed_files = 0
+    skipped_items = 0
+    
+    for index, item in enumerate(items):
         item_path = os.path.join(directory, item)
+        
+        # 每处理10个项目或处理到最后一个项目时输出进度
+        if (index + 1) % 10 == 0 or index + 1 == total_items:
+            logger.info(f"目录 {directory} 处理进度: {index + 1}/{total_items} ({(index + 1) / total_items * 100:.1f}%)")
         
         # 跳过黑名单项
         if is_blacklisted(item_path):
+            skipped_items += 1
             continue
         
         if os.path.isdir(item_path):
             # 递归处理子目录
+            processed_dirs += 1
             process_directory(item_path, db)
         elif item.endswith(".md"):
             # 处理Markdown文件
+            processed_files += 1
             process_markdown_file(item_path, category.id, db)
+    
+    # 计算处理耗时
+    end_time = datetime.now()
+    elapsed_time = (end_time - start_time).total_seconds()
+    
+    logger.info(f"目录 {directory} 处理完成，耗时 {elapsed_time:.2f} 秒")
+    logger.info(f"处理统计 - 子目录: {processed_dirs}，文件: {processed_files}，跳过项目: {skipped_items}")
+    
 
 def process_markdown_file(file_path: str, category_id: int, db: Session) -> None:
     """
     处理Markdown文件，提取内容并保存到数据库
     """
     
+    start_time = datetime.now()
+    logger.debug(f"开始处理文件: {file_path}")
+    
     try:
         # 读取文件内容
         with open(file_path, "r", encoding="utf-8") as f:
             content = f.read()
+        
+        file_size = os.path.getsize(file_path) / 1024  # KB
+        logger.debug(f"文件大小: {file_size:.2f} KB, 内容长度: {len(content)} 字符")
         
         # 检查文件路径是否在黑名单中
         if is_blacklisted(file_path):
@@ -408,9 +461,19 @@ def process_markdown_file(file_path: str, category_id: int, db: Session) -> None
         
         db.commit()
         
+        # 计算处理耗时
+        end_time = datetime.now()
+        elapsed_time = (end_time - start_time).total_seconds()
+        logger.debug(f"文件 {file_path} 处理完成，耗时 {elapsed_time:.2f} 秒")
+        
     except Exception as e:
         logger.error(f"处理文件 {file_path} 失败: {str(e)}")
         db.rollback()
+        
+        # 记录详细错误信息
+        import traceback
+        logger.error(f"处理文件详细错误: {traceback.format_exc()}")
+        
 
 def slugify(text: str) -> str:
     """
