@@ -2,6 +2,8 @@
 backend/.env
 backend/.env.local
 
+gxBlog/.env.development
+gxBlog/.env.production
 
 # 日志文件
 *.log
