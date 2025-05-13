@@ -131,7 +131,7 @@ def sync_repository(repo_url: str, target_dir: str, db: Session) -> None:
                         progress=progress_printer
                     )
                     logger.info("克隆完成")
-                    # return repo
+                    return repo
                 except git.GitCommandError as e:
                     retry_count += 1
                     if "Failed to connect" in str(e) and retry_count < max_retries:
