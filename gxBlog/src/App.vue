@@ -7,7 +7,11 @@ import Footer from './components/Footer.vue'
   <div class="app-container">
     <Header />
     <main class="main-content">
-      <router-view />
+      <router-view v-slot="{ Component }">
+        <transition name="fade" mode="out-in">
+          <component :is="Component" />
+        </transition>
+      </router-view>
     </main>
     <Footer />
   </div>
@@ -26,5 +30,16 @@ import Footer from './components/Footer.vue'
   max-width: 1200px;
   margin: 0 auto;
   width: 100%;
+}
+
+/* 页面过渡动画 */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>

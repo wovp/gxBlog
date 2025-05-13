@@ -503,33 +503,56 @@ onMounted(() => {
 }
 
 /* 加载状态 */
-.loading {
+.loading-container {
   display: flex;
   flex-direction: column;
-  align-items: center;
   justify-content: center;
-  padding: 4rem 0;
+  align-items: center;
+  min-height: 300px;
+  width: 100%;
 }
 
-.spinner {
-  width: 50px;
-  height: 50px;
-  border: 3px solid rgba(166, 192, 254, 0.2);
+.loading-spinner {
+  position: relative;
+  width: 60px;
+  height: 60px;
+}
+
+.spinner-circle {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border: 4px solid transparent;
+  border-top-color: #ff69b4;
   border-radius: 50%;
-  border-top-color: #f68084;
-  animation: spin 1s ease-in-out infinite;
-  margin-bottom: 1.5rem;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+  animation: spin 1.2s linear infinite;
 }
 
-.loading p {
-  color: #666;
-  font-size: 1.1rem;
+.spinner-circle-inner {
+  position: absolute;
+  top: 15%;
+  left: 15%;
+  width: 70%;
+  height: 70%;
+  border: 4px solid transparent;
+  border-top-color: #ffb6c1;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite reverse;
+}
+
+.loading-text {
+  margin-top: 15px;
+  font-size: 1rem;
+  color: #ff69b4;
   font-weight: 500;
 }
 
 @keyframes spin {
-  to {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
     transform: rotate(360deg);
   }
 }

@@ -1,18 +1,18 @@
 {
 	"head": {
-		"title": "Gx",
+		"title": "胖胖藏",
 		"description": "Author:Gx,Category:Personal Blog",
 		"favicon": "favicon.ico"
 	},
 	"intro": {
-		"title": "Gx",
+		"title": "胖胖藏",
 		"subtitle": "爱折腾的普通人的博客",
 		"enter": "enter",
 		"supportAuthor": true,
 		"background": true
 	},
 	"main": {
-		"name": "Gx",
+		"name": "胖胖藏",
 		"signature": "Code & Input & Output",
 		"avatar": {
 			"link": "assets/avatar.jpg",
@@ -21,12 +21,12 @@
 		},
 		"ul": {
 			"first": {
-				"href": "/",
+				"href": "/blog",
 				"icon": "bokeyuan",
 				"text": "Blog"
 			},
 			"second": {
-				"href": "/",
+				"href": "/blog",
 				"icon": "xiaolian",
 				"text": "About"
 			},

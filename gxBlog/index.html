@@ -1,13 +1,41 @@
 <!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + Vue + TS</title>
-  </head>
-  <body>
-    <div id="app"></div>
-    <script type="module" src="/src/main.ts"></script>
-  </body>
+<html lang="zh-CN"> <!-- 修改为中文语言 -->
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/blogLableHappyPic.svg" id="favicon" /> <!-- 使用自定义图标并添加ID -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>胖胖藏</title> <!-- 更新网站标题 -->
+  <meta name="description" content="一个分享技术与生活的个人博客" /> <!-- 添加网站描述 -->
+  <script>
+    // 页面标题和图标切换功能
+    (function () {
+      // 原始标题和图标
+      const originalTitle = document.title;
+      const originalFavicon = document.getElementById('favicon').getAttribute('href');
+      // 离开时的标题和图标
+      const awayTitle = '(つ ◕_◕ )つ 快回来看看吧~';
+      const awayFavicon = '/blogLableUnhappyPic.svg'; // 使用另一个图标
+
+      // 监听页面可见性变化
+      document.addEventListener('visibilitychange', function () {
+        if (document.hidden) {
+          // 页面不可见时，修改标题和图标
+          document.title = awayTitle;
+          document.getElementById('favicon').setAttribute('href', awayFavicon);
+        } else {
+          // 页面可见时，恢复原始标题和图标
+          document.title = originalTitle;
+          document.getElementById('favicon').setAttribute('href', originalFavicon);
+        }
+      });
+    })();
+  </script>
+</head>
+
+<body>
+  <div id="app"></div>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+
 </html>

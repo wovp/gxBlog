@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
-const activeIndex = ref('1')
+const activeIndex = ref('4')
 
 const handleSelect = (key: string) => {
   // 更新activeIndex值
@@ -21,7 +21,7 @@ const handleSelect = (key: string) => {
       router.push('/about')
       break
     case '4':
-      router.push('/homepage')
+      router.push('/blog')
       break
   }
 }
@@ -33,7 +33,7 @@ const handleSelect = (key: string) => {
       <div class="logo">
         <div class="logo-icon">✿</div>
         <div class="logo-text">
-          <h1 class="site-title">高兴</h1>
+          <h1 class="site-title">胖胖藏</h1>
           <p class="site-desc">✨ 分享技术与生活 ✨</p>
         </div>
       </div>
@@ -56,7 +56,7 @@ const handleSelect = (key: string) => {
           </li>
           <li>
             <a href="#" @click.prevent="handleSelect('4')" :class="{ active: activeIndex === '4' }">
-              <span class="nav-icon">👋</span> <span class="nav-text">个人主页</span>
+              <span class="nav-icon">📝</span> <span class="nav-text">博客</span>
             </a>
           </li>
         </ul>
@@ -326,28 +326,25 @@ const handleSelect = (key: string) => {
   }
 }
 
+/* 响应式设计优化 */
 @media (max-width: 768px) {
   .header-container {
     flex-direction: column;
     padding: 1rem;
   }
 
-  .nav-menu {
-    margin-top: 1rem;
-    width: 100%;
-  }
-
   .nav-menu ul {
+    flex-wrap: wrap;
     justify-content: center;
+    margin-top: 1rem;
   }
 
   .nav-menu li {
-    margin: 0 0.8rem;
+    margin: 0.5rem;
   }
 
-  .nav-menu a {
-    padding: 0.4rem 0.6rem;
-    font-size: 1rem;
+  .logo {
+    margin-bottom: 0.5rem;
   }
 }
 </style>
