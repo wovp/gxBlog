@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import type { NumberAnimationInst } from 'naive-ui'
-import { getRandomAvatarImage, getRandomBackgroundImage } from '../assets/imageResources'
 import { onMounted, onUnmounted, ref } from 'vue'
 
 // 创建 Intersection Observer 来处理淡入动画
@@ -30,6 +29,10 @@ const calculateAge = () => {
 
 // 定时更新年龄
 let ageInterval: number | null = null
+
+const goToGitHub = () => {
+  window.open('https://github.com/wovp', '_blank');
+}
 
 onMounted(() => {
   const numberAnimationInstRef = ref<NumberAnimationInst | null>(null)
@@ -83,45 +86,22 @@ onUnmounted(() => {
       <n-card class="author-card fade-in-section" hoverable>
         <div class="author-profile">
           <div class="avatar-container">
-            <n-avatar round size="48" :src="`avata.jpg`" class="author-avatar" />
+            <n-avatar size="64" :src="`avata.jpg`" class="author-avatar" />
             <div class="avatar-decoration">♥</div>
           </div>
           <div class="author-info">
             <n-h2 prefix="bar">技术博主</n-h2>
             <n-text depth="3">全栈开发工程师 / 技术写作者</n-text>
             <div class="social-links">
-              <n-button quaternary circle class="social-button">
+              <n-button quaternary circle class="social-button" title="github" @click="goToGitHub">
                 <template #icon>
-                  <n-icon><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                  <n-icon>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                       <path
                         d="M12 2A10 10 0 0 0 2 12c0 4.42 2.87 8.17 6.84 9.5c.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34c-.46-1.16-1.11-1.47-1.11-1.47c-.91-.62.07-.6.07-.6c1 .07 1.53 1.03 1.53 1.03c.87 1.52 2.34 1.07 2.91.83c.09-.65.35-1.09.63-1.34c-2.22-.25-4.55-1.11-4.55-4.92c0-1.11.38-2 1.03-2.71c-.1-.25-.45-1.29.1-2.64c0 0 .84-.27 2.75 1.02c.79-.22 1.65-.33 2.5-.33c.85 0 1.71.11 2.5.33c1.91-1.29 2.75-1.02 2.75-1.02c.55 1.35.2 2.39.1 2.64c.65.71 1.03 1.6 1.03 2.71c0 3.82-2.34 4.66-4.57 4.91c.36.31.69.92.69 1.85V21c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0 0 12 2z"
-                        fill="currentColor"></path>
-                    </svg></n-icon>
-                </template>
-              </n-button>
-              <n-button quaternary circle class="social-button">
-                <template #icon>
-                  <n-icon><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                      <path
-                        d="M20.52 3.449C20.192 3.16 19.76 3 19.28 3H4.72c-.48 0-.88.16-1.24.449c-.35.288-.56.64-.56 1.101c0 .288.07.56.18.8L9 13.601v6.649c0 .129.05.24.12.32c.08.08.17.13.28.13c.08 0 .17-.03.24-.08l2.26-1.27c.24-.129.36-.359.36-.649v-5.1l5.88-8.451c.12-.24.18-.511.18-.8c0-.46-.2-.812-.56-1.101z"
-                        fill="currentColor"></path>
-                    </svg></n-icon>
-                </template>
-              </n-button>
-              <n-button quaternary circle class="social-button">
-                <template #icon>
-                  <n-icon><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                      <path d="M7.5 6.75V0h9v6.75h-9zm9 3.75H24V24H0V10.5h7.5v6.75h9V10.5z" fill="currentColor"></path>
-                    </svg></n-icon>
-                </template>
-              </n-button>
-              <n-button quaternary circle class="social-button">
-                <template #icon>
-                  <n-icon><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                      <path
-                        d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10s-4.477 10-10 10zm-2.29-2.333A17.9 17.9 0 0 1 8.027 13H4.062a8.008 8.008 0 0 0 5.648 6.667zM10.03 13c.151 2.439.848 4.73 1.97 6.752A15.905 15.905 0 0 0 13.97 13h-3.94zm9.908 0h-3.965a17.9 17.9 0 0 1-1.683 6.667A8.008 8.008 0 0 0 19.938 13zM4.062 11h3.965A17.9 17.9 0 0 1 9.71 4.333A8.008 8.008 0 0 0 4.062 11zm5.969 0h3.938A15.905 15.905 0 0 0 12 4.248A15.905 15.905 0 0 0 10.03 11zm4.259-6.667A17.9 17.9 0 0 1 15.973 11h3.965a8.008 8.008 0 0 0-5.648-6.667z"
-                        fill="currentColor"></path>
-                    </svg></n-icon>
+                        fill="currentColor" />
+                    </svg>
+                  </n-icon>
                 </template>
               </n-button>
             </div>
@@ -132,10 +112,7 @@ onUnmounted(() => {
       <!-- 个人简介 -->
       <n-card title="✨ 个人简介 ✨" class="about-section fade-in-section" hoverable>
         <n-text class="bio-text">
-          <p>你好，我是一名热爱技术的全栈开发工程师。</p>
-          <p>我创建这个博客的目的是分享我在技术学习和工作中的经验、见解和心得。</p>
-          <p>我相信技术的力量可以改变世界，而分享知识则可以让这种力量倍增。</p>
-          <p>希望我的博客内容能够对你有所帮助，也欢迎与我交流讨论！</p>
+          <p>普通人</p>
         </n-text>
       </n-card>
 
@@ -144,7 +121,7 @@ onUnmounted(() => {
         <div class="age-container">
           <n-text class="age-label">我已经在这个世界上度过了</n-text>
           <div class="age-animation">
-            <n-number-animation ref="numberAnimationInstRef" :from="0" :to="currentAge" :duration="1000" :precision="9"
+            <n-number-animation ref="numberAnimationInstRef" :from="0" :to="currentAge" :duration="5000" :precision="9"
               show-separator active />
             <n-text class="age-unit">岁</n-text>
           </div>
@@ -209,7 +186,7 @@ onUnmounted(() => {
 }
 
 .author-avatar {
-  width: 120px;
+  width: 80;
   height: 120px;
   border: 3px solid #ff69b4;
   box-shadow: 0 4px 8px rgba(255, 105, 180, 0.3);
