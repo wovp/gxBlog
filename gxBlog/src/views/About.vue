@@ -1,473 +1,392 @@
 <script setup lang="ts">
+import type { NumberAnimationInst } from 'naive-ui'
 import { getRandomAvatarImage, getRandomBackgroundImage } from '../assets/imageResources'
+import { onMounted, onUnmounted, ref } from 'vue'
+
+// 创建 Intersection Observer 来处理淡入动画
+let observer: IntersectionObserver
+
+// 定义个人兴趣爱好
+const hobbies = [
+  { name: '阅读', icon: '📚' },
+  { name: '旅行', icon: '✈️' },
+  { name: '摄影', icon: '📷' },
+  { name: '音乐', icon: '🎵' },
+  { name: '编程', icon: '💻' }
+]
+
+// 计算年龄的逻辑
+const birthYear = 2003 // 这里替换为你的出生年份
+const currentAge = ref(0)
+
+// 计算精确的年龄（包含小数部分）
+const calculateAge = () => {
+  const now = new Date()
+  const birthDate = new Date(birthYear, 2, 19) // 假设1月1日为生日，可以根据实际情况调整
+  const ageInMilliseconds = now.getTime() - birthDate.getTime()
+  const ageInYears = ageInMilliseconds / (1000 * 60 * 60 * 24 * 365.25)
+  currentAge.value = parseFloat(ageInYears.toFixed(9)) // 保留9位小数以实现平滑动画效果
+}
+
+// 定时更新年龄
+let ageInterval: number | null = null
+
+onMounted(() => {
+  const numberAnimationInstRef = ref<NumberAnimationInst | null>(null)
+  // 设置 Intersection Observer
+  observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('is-visible')
+      }
+    })
+  }, {
+    threshold: 0.1 // 当元素10%进入视口时触发
+  })
+
+  // 观察所有带有 fade-in-section 类的元素
+  document.querySelectorAll('.fade-in-section').forEach(el => {
+    observer.observe(el)
+  })
+
+  // 初始计算年龄
+  calculateAge()
+  numberAnimationInstRef.value?.play()
+})
+
+onUnmounted(() => {
+  // 清除 Intersection Observer
+  if (observer) {
+    observer.disconnect()
+  }
+
+  // 清除年龄计时器
+  if (ageInterval !== null) {
+    clearInterval(ageInterval)
+    ageInterval = null
+  }
+})
 </script>
 
 <template>
-  <div class="about-page">
-    <div class="about-header">
-      <h1 class="page-title">关于我</h1>
-      <div class="author-profile">
-        <div class="author-avatar">
-          <img :src="getRandomAvatarImage()" alt="博主头像" />
-        </div>
-        <div class="author-info">
-          <h2 class="author-name">技术博主</h2>
-          <p class="author-title">全栈开发工程师 / 技术写作者</p>
-          <div class="social-links">
-            <a href="#" class="social-link">GitHub</a>
-            <a href="#" class="social-link">微博</a>
-            <a href="#" class="social-link">知乎</a>
-            <a href="#" class="social-link">掘金</a>
+  <n-layout class="about-page">
+    <n-layout-header>
+      <n-page-header>
+        <template #title>
+          <n-gradient-text type="success" size="48">✨ 关于我 ✨</n-gradient-text>
+        </template>
+      </n-page-header>
+    </n-layout-header>
+
+    <n-layout-content>
+      <!-- 作者信息卡片 -->
+      <n-card class="author-card fade-in-section" hoverable>
+        <div class="author-profile">
+          <div class="avatar-container">
+            <n-avatar round size="48" :src="`avata.jpg`" class="author-avatar" />
+            <div class="avatar-decoration">♥</div>
           </div>
-        </div>
-      </div>
-    </div>
-    
-    <div class="about-content">
-      <section class="about-section">
-        <h2 class="section-title">个人简介</h2>
-        <div class="section-content">
-          <p>你好，我是一名热爱技术的全栈开发工程师，拥有5年的Web开发经验。我专注于前端和后端技术，包括Vue、React、Node.js、Python等。</p>
-          <p>我创建这个博客的目的是分享我在技术学习和工作中的经验、见解和心得。希望通过我的文章，能够帮助到更多的开发者，特别是那些正在学习编程的新手。</p>
-          <p>除了编程，我还喜欢阅读、旅行和摄影。我相信技术应该服务于生活，而不仅仅是工作。</p>
-        </div>
-      </section>
-      
-      <section class="about-section">
-        <h2 class="section-title">技能专长</h2>
-        <div class="section-content">
-          <div class="skills-container">
-            <div class="skill-category">
-              <h3 class="category-title">前端开发</h3>
-              <ul class="skill-list">
-                <li class="skill-item">
-                  <span class="skill-name">HTML/CSS</span>
-                  <div class="skill-bar">
-                    <div class="skill-level" style="width: 95%"></div>
-                  </div>
-                </li>
-                <li class="skill-item">
-                  <span class="skill-name">JavaScript</span>
-                  <div class="skill-bar">
-                    <div class="skill-level" style="width: 90%"></div>
-                  </div>
-                </li>
-                <li class="skill-item">
-                  <span class="skill-name">Vue.js</span>
-                  <div class="skill-bar">
-                    <div class="skill-level" style="width: 92%"></div>
-                  </div>
-                </li>
-                <li class="skill-item">
-                  <span class="skill-name">React</span>
-                  <div class="skill-bar">
-                    <div class="skill-level" style="width: 85%"></div>
-                  </div>
-                </li>
-                <li class="skill-item">
-                  <span class="skill-name">TypeScript</span>
-                  <div class="skill-bar">
-                    <div class="skill-level" style="width: 80%"></div>
-                  </div>
-                </li>
-              </ul>
-            </div>
-            
-            <div class="skill-category">
-              <h3 class="category-title">后端开发</h3>
-              <ul class="skill-list">
-                <li class="skill-item">
-                  <span class="skill-name">Node.js</span>
-                  <div class="skill-bar">
-                    <div class="skill-level" style="width: 88%"></div>
-                  </div>
-                </li>
-                <li class="skill-item">
-                  <span class="skill-name">Python</span>
-                  <div class="skill-bar">
-                    <div class="skill-level" style="width: 75%"></div>
-                  </div>
-                </li>
-                <li class="skill-item">
-                  <span class="skill-name">Express/Koa</span>
-                  <div class="skill-bar">
-                    <div class="skill-level" style="width: 85%"></div>
-                  </div>
-                </li>
-                <li class="skill-item">
-                  <span class="skill-name">MongoDB</span>
-                  <div class="skill-bar">
-                    <div class="skill-level" style="width: 80%"></div>
-                  </div>
-                </li>
-                <li class="skill-item">
-                  <span class="skill-name">MySQL</span>
-                  <div class="skill-bar">
-                    <div class="skill-level" style="width: 78%"></div>
-                  </div>
-                </li>
-              </ul>
+          <div class="author-info">
+            <n-h2 prefix="bar">技术博主</n-h2>
+            <n-text depth="3">全栈开发工程师 / 技术写作者</n-text>
+            <div class="social-links">
+              <n-button quaternary circle class="social-button">
+                <template #icon>
+                  <n-icon><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                      <path
+                        d="M12 2A10 10 0 0 0 2 12c0 4.42 2.87 8.17 6.84 9.5c.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34c-.46-1.16-1.11-1.47-1.11-1.47c-.91-.62.07-.6.07-.6c1 .07 1.53 1.03 1.53 1.03c.87 1.52 2.34 1.07 2.91.83c.09-.65.35-1.09.63-1.34c-2.22-.25-4.55-1.11-4.55-4.92c0-1.11.38-2 1.03-2.71c-.1-.25-.45-1.29.1-2.64c0 0 .84-.27 2.75 1.02c.79-.22 1.65-.33 2.5-.33c.85 0 1.71.11 2.5.33c1.91-1.29 2.75-1.02 2.75-1.02c.55 1.35.2 2.39.1 2.64c.65.71 1.03 1.6 1.03 2.71c0 3.82-2.34 4.66-4.57 4.91c.36.31.69.92.69 1.85V21c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0 0 12 2z"
+                        fill="currentColor"></path>
+                    </svg></n-icon>
+                </template>
+              </n-button>
+              <n-button quaternary circle class="social-button">
+                <template #icon>
+                  <n-icon><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                      <path
+                        d="M20.52 3.449C20.192 3.16 19.76 3 19.28 3H4.72c-.48 0-.88.16-1.24.449c-.35.288-.56.64-.56 1.101c0 .288.07.56.18.8L9 13.601v6.649c0 .129.05.24.12.32c.08.08.17.13.28.13c.08 0 .17-.03.24-.08l2.26-1.27c.24-.129.36-.359.36-.649v-5.1l5.88-8.451c.12-.24.18-.511.18-.8c0-.46-.2-.812-.56-1.101z"
+                        fill="currentColor"></path>
+                    </svg></n-icon>
+                </template>
+              </n-button>
+              <n-button quaternary circle class="social-button">
+                <template #icon>
+                  <n-icon><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                      <path d="M7.5 6.75V0h9v6.75h-9zm9 3.75H24V24H0V10.5h7.5v6.75h9V10.5z" fill="currentColor"></path>
+                    </svg></n-icon>
+                </template>
+              </n-button>
+              <n-button quaternary circle class="social-button">
+                <template #icon>
+                  <n-icon><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                      <path
+                        d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10s-4.477 10-10 10zm-2.29-2.333A17.9 17.9 0 0 1 8.027 13H4.062a8.008 8.008 0 0 0 5.648 6.667zM10.03 13c.151 2.439.848 4.73 1.97 6.752A15.905 15.905 0 0 0 13.97 13h-3.94zm9.908 0h-3.965a17.9 17.9 0 0 1-1.683 6.667A8.008 8.008 0 0 0 19.938 13zM4.062 11h3.965A17.9 17.9 0 0 1 9.71 4.333A8.008 8.008 0 0 0 4.062 11zm5.969 0h3.938A15.905 15.905 0 0 0 12 4.248A15.905 15.905 0 0 0 10.03 11zm4.259-6.667A17.9 17.9 0 0 1 15.973 11h3.965a8.008 8.008 0 0 0-5.648-6.667z"
+                        fill="currentColor"></path>
+                    </svg></n-icon>
+                </template>
+              </n-button>
             </div>
           </div>
         </div>
-      </section>
-      
-      <section class="about-section">
-        <h2 class="section-title">工作经历</h2>
-        <div class="section-content">
-          <div class="timeline">
-            <div class="timeline-item">
-              <div class="timeline-dot"></div>
-              <div class="timeline-content">
-                <h3 class="timeline-title">高级前端开发工程师</h3>
-                <p class="timeline-company">某科技有限公司</p>
-                <p class="timeline-period">2021年至今</p>
-                <p class="timeline-description">负责公司核心产品的前端架构设计和开发，优化用户体验，提升应用性能。主导了多个重要项目，包括产品重构和新功能开发。</p>
-              </div>
-            </div>
-            
-            <div class="timeline-item">
-              <div class="timeline-dot"></div>
-              <div class="timeline-content">
-                <h3 class="timeline-title">全栈开发工程师</h3>
-                <p class="timeline-company">某网络科技公司</p>
-                <p class="timeline-period">2019年 - 2021年</p>
-                <p class="timeline-description">参与公司多个项目的前后端开发，使用Vue.js和Node.js构建Web应用，负责数据库设计和API开发。</p>
-              </div>
-            </div>
-            
-            <div class="timeline-item">
-              <div class="timeline-dot"></div>
-              <div class="timeline-content">
-                <h3 class="timeline-title">前端开发实习生</h3>
-                <p class="timeline-company">某互联网公司</p>
-                <p class="timeline-period">2018年 - 2019年</p>
-                <p class="timeline-description">参与公司官网和内部系统的前端开发，学习和实践前端技术，包括HTML/CSS、JavaScript和Vue.js。</p>
-              </div>
-            </div>
+      </n-card>
+
+      <!-- 个人简介 -->
+      <n-card title="✨ 个人简介 ✨" class="about-section fade-in-section" hoverable>
+        <n-text class="bio-text">
+          <p>你好，我是一名热爱技术的全栈开发工程师。</p>
+          <p>我创建这个博客的目的是分享我在技术学习和工作中的经验、见解和心得。</p>
+          <p>我相信技术的力量可以改变世界，而分享知识则可以让这种力量倍增。</p>
+          <p>希望我的博客内容能够对你有所帮助，也欢迎与我交流讨论！</p>
+        </n-text>
+      </n-card>
+
+      <!-- 年龄倒计时 -->
+      <n-card title="✨ 我的年龄 ✨" class="about-section fade-in-section age-card" hoverable>
+        <div class="age-container">
+          <n-text class="age-label">我已经在这个世界上度过了</n-text>
+          <div class="age-animation">
+            <n-number-animation ref="numberAnimationInstRef" :from="0" :to="currentAge" :duration="1000" :precision="9"
+              show-separator active />
+            <n-text class="age-unit">岁</n-text>
           </div>
+          <n-text class="age-description">时间飞逝，感谢相遇！</n-text>
         </div>
-      </section>
-      
-      <section class="about-section">
-        <h2 class="section-title">联系我</h2>
-        <div class="section-content">
-          <div class="contact-info">
-            <div class="contact-item">
-              <span class="contact-label">邮箱：</span>
-              <span class="contact-value">example@email.com</span>
-            </div>
-            <div class="contact-item">
-              <span class="contact-label">微信：</span>
-              <span class="contact-value">wechat_id</span>
-            </div>
-            <div class="contact-item">
-              <span class="contact-label">GitHub：</span>
-              <span class="contact-value">github.com/username</span>
-            </div>
-          </div>
-          
-          <div class="contact-form">
-            <h3 class="form-title">给我留言</h3>
-            <div class="form-group">
-              <label for="name">您的姓名</label>
-              <input type="text" id="name" placeholder="请输入您的姓名" />
-            </div>
-            <div class="form-group">
-              <label for="email">您的邮箱</label>
-              <input type="email" id="email" placeholder="请输入您的邮箱" />
-            </div>
-            <div class="form-group">
-              <label for="message">留言内容</label>
-              <textarea id="message" rows="5" placeholder="请输入留言内容"></textarea>
-            </div>
-            <button class="submit-btn">发送留言</button>
-          </div>
-        </div>
-      </section>
-    </div>
-  </div>
+      </n-card>
+
+      <!-- 兴趣爱好 -->
+      <n-card title="✨ 兴趣爱好 ✨" class="about-section fade-in-section" hoverable>
+        <n-grid :cols="5" :x-gap="12">
+          <n-grid-item v-for="hobby in hobbies" :key="hobby.name">
+            <n-card class="hobby-card" hoverable>
+              <div class="hobby-icon">{{ hobby.icon }}</div>
+              <n-text class="hobby-name">{{ hobby.name }}</n-text>
+            </n-card>
+          </n-grid-item>
+        </n-grid>
+      </n-card>
+    </n-layout-content>
+  </n-layout>
 </template>
 
 <style scoped>
 .about-page {
-  padding-bottom: 3rem;
+  padding: 2rem 1rem;
+  min-height: 100vh;
+  background-color: #fff5f8;
+  /* 淡粉色背景 */
 }
 
-/* 页面头部 */
-.about-header {
-  text-align: center;
-  margin-bottom: 3rem;
+.fade-in-section {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.5s ease-out, transform 0.5s ease-out;
 }
 
-.page-title {
-  font-size: 2.2rem;
-  color: #2c3e50;
-  margin-bottom: 2rem;
+.fade-in-section.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.author-card {
+  margin-bottom: 1.5rem;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(255, 105, 180, 0.15);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.author-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 24px rgba(255, 105, 180, 0.25);
 }
 
 .author-profile {
   display: flex;
-  flex-direction: column;
   align-items: center;
+  gap: 2rem;
+}
+
+.avatar-container {
+  position: relative;
 }
 
 .author-avatar {
-  width: 180px;
-  height: 180px;
-  border-radius: 50%;
-  overflow: hidden;
-  margin-bottom: 1.5rem;
-  border: 5px solid white;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  width: 120px;
+  height: 120px;
+  border: 3px solid #ff69b4;
+  box-shadow: 0 4px 8px rgba(255, 105, 180, 0.3);
+  transition: transform 0.5s ease;
 }
 
-.author-avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+.avatar-decoration {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  font-size: 24px;
+  color: #ff69b4;
+  animation: float 2s ease-in-out infinite;
 }
 
-.author-name {
-  font-size: 1.8rem;
-  color: #2c3e50;
-  margin-bottom: 0.5rem;
-}
-
-.author-title {
-  font-size: 1.1rem;
-  color: #7f8c8d;
-  margin-bottom: 1rem;
+.author-info {
+  flex: 1;
 }
 
 .social-links {
   display: flex;
   gap: 1rem;
+  margin-top: 1rem;
 }
 
-.social-link {
-  color: #3498db;
-  text-decoration: none;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  background-color: #f0f7ff;
-  transition: all 0.3s;
+.social-button {
+  transition: transform 0.3s ease, background-color 0.3s ease;
 }
 
-.social-link:hover {
-  background-color: #3498db;
-  color: white;
-}
-
-/* 内容区域 */
-.about-content {
-  max-width: 800px;
-  margin: 0 auto;
+.social-button:hover {
+  transform: scale(1.2) rotate(5deg);
+  background-color: rgba(255, 105, 180, 0.1);
 }
 
 .about-section {
-  margin-bottom: 3rem;
-  background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-}
-
-.section-title {
-  font-size: 1.5rem;
-  padding: 1.5rem;
-  margin: 0;
-  background-color: #f8f9fa;
-  color: #2c3e50;
-  border-bottom: 1px solid #eee;
-}
-
-.section-content {
-  padding: 1.5rem;
-}
-
-.section-content p {
-  line-height: 1.6;
-  color: #34495e;
-  margin-bottom: 1rem;
-}
-
-/* 技能部分 */
-.skills-container {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 2rem;
-}
-
-.category-title {
-  font-size: 1.2rem;
-  margin-bottom: 1rem;
-  color: #2c3e50;
-}
-
-.skill-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.skill-item {
-  margin-bottom: 1rem;
-}
-
-.skill-name {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-weight: 500;
-  color: #34495e;
-}
-
-.skill-bar {
-  height: 8px;
-  background-color: #ecf0f1;
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.skill-level {
-  height: 100%;
-  background-color: #3498db;
-  border-radius: 4px;
-}
-
-/* 时间线 */
-.timeline {
-  position: relative;
-  padding-left: 2rem;
-}
-
-.timeline::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 7px;
-  height: 100%;
-  width: 2px;
-  background-color: #e0e0e0;
-}
-
-.timeline-item {
-  position: relative;
-  margin-bottom: 2rem;
-}
-
-.timeline-dot {
-  position: absolute;
-  left: -2rem;
-  top: 0;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background-color: #3498db;
-  border: 2px solid white;
-  z-index: 1;
-}
-
-.timeline-title {
-  font-size: 1.2rem;
-  margin: 0 0 0.5rem;
-  color: #2c3e50;
-}
-
-.timeline-company {
-  font-weight: 500;
-  margin: 0 0 0.3rem;
-  color: #34495e;
-}
-
-.timeline-period {
-  font-size: 0.9rem;
-  color: #7f8c8d;
-  margin: 0 0 0.5rem;
-}
-
-.timeline-description {
-  line-height: 1.5;
-  color: #34495e;
-}
-
-/* 联系表单 */
-.contact-info {
-  margin-bottom: 2rem;
-}
-
-.contact-item {
-  margin-bottom: 0.8rem;
-}
-
-.contact-label {
-  font-weight: 600;
-  color: #34495e;
-}
-
-.form-title {
-  font-size: 1.3rem;
   margin-bottom: 1.5rem;
-  color: #2c3e50;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(255, 105, 180, 0.15);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.form-group {
-  margin-bottom: 1.2rem;
+.about-section:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 24px rgba(255, 105, 180, 0.25);
 }
 
-.form-group label {
-  display: block;
+.bio-text p {
+  line-height: 1.8;
+  margin-bottom: 1rem;
+  font-size: 1.05rem;
+}
+
+.hobby-card {
+  text-align: center;
+  padding: 1rem;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #fff5f8 0%, #fff0f5 100%);
+  box-shadow: 0 4px 8px rgba(255, 105, 180, 0.15);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hobby-card:hover {
+  transform: scale(1.1) rotate(3deg);
+  box-shadow: 0 8px 16px rgba(255, 105, 180, 0.25);
+}
+
+.hobby-icon {
+  font-size: 2.5rem;
   margin-bottom: 0.5rem;
-  font-weight: 500;
-  color: #34495e;
+  animation: bounce 2s ease infinite;
 }
 
-input, textarea {
-  width: 100%;
-  padding: 0.8rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+.hobby-name {
+  font-weight: bold;
+  color: #ff69b4;
+}
+
+.age-card {
+  text-align: center;
+}
+
+.age-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem 0;
+}
+
+.age-label {
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+  color: #ff69b4;
+}
+
+.age-animation {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  font-weight: bold;
+  margin: 1rem 0;
+  background: linear-gradient(135deg, #ff69b4 0%, #ff1493 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: pulse 2s infinite;
+}
+
+.age-unit {
+  margin-left: 0.5rem;
+  font-size: 2rem;
+  background: linear-gradient(135deg, #ff69b4 0%, #ff1493 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.age-description {
   font-size: 1rem;
-  transition: border-color 0.3s;
+  color: #666;
+  margin-top: 1rem;
 }
 
-input:focus, textarea:focus {
-  border-color: #3498db;
-  outline: none;
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.05);
+  }
+
+  100% {
+    transform: scale(1);
+  }
 }
 
-.submit-btn {
-  background-color: #3498db;
-  color: white;
-  border: none;
-  padding: 0.8rem 1.5rem;
-  font-size: 1rem;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.3s;
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
 }
 
-.submit-btn:hover {
-  background-color: #2980b9;
+@keyframes bounce {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
 }
 
 /* 响应式设计 */
 @media (max-width: 768px) {
-  .skills-container {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-  }
-  
   .author-profile {
-    padding: 0 1rem;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
   }
-  
-  .section-title {
-    padding: 1rem;
+
+  .social-links {
+    justify-content: center;
   }
-  
-  .section-content {
-    padding: 1rem;
+
+  .hobby-card {
+    padding: 0.5rem;
+  }
+
+  .hobby-icon {
+    font-size: 2rem;
   }
 }
 </style>

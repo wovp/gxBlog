@@ -1,6 +1,14 @@
 import { createApp } from 'vue'
 import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
+// 引入naive-ui
+import naive from 'naive-ui'
+
+// 通用字体
+import 'vfonts/Lato.css'
+// 等宽字体
+import 'vfonts/FiraCode.css'
+
 import './style.css'
 import App from './App.vue'
 import router from './router'
@@ -23,5 +31,6 @@ if (import.meta.env.MODE === 'development' && !isDebugMode) {
 
 const app = createApp(App)
 app.use(ElementPlus)
+app.use(naive) // 注册naive-ui
 app.use(router)
 app.mount('#app')
