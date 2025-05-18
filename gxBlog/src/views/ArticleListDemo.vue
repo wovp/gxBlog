@@ -26,6 +26,7 @@ import {
 import { ArrowUpOutline } from '@vicons/ionicons5'
 
 import Text3d from '../components/ui/Text3d.vue'
+import LetterPullup from '../components/ui/LetterPullup.vue'
 
 // 状态变量
 const articles = ref<ArticleListItem[]>([])
@@ -126,13 +127,15 @@ onMounted(() => {
 
     <n-layout-content>
       <!-- 页面标题区域 -->
-      <n-page-header class="page-header" subtitle="探索各种技术文章和个人见解">
+      <n-page-header class="page-header">
         <template #title>
           <Text3d>
             所有文章
           </Text3d>
         </template>
-
+        <template #subtitle>
+          <LetterPullup words="探索各种技术文章和个人见解" :delay="0.5" class="text-black dark:text-white" />
+        </template>
       </n-page-header>
 
       <!-- 分类筛选区域 -->
@@ -263,7 +266,8 @@ onMounted(() => {
 
 /* 页面标题区域 */
 .page-header {
-  margin-bottom: 1.5rem;
+  /* margin-bottom: 1.5rem; */
+  width: 100%;
   background-color: transparent;
 }
 

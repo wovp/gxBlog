@@ -2,7 +2,6 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import BlurReveal from './ui/BlurReveal.vue'
-import RainbowButton from './ui/RainbowButton.vue'
 
 const router = useRouter()
 const activeIndex = ref('4')
@@ -35,7 +34,7 @@ const handleSelect = (key: string) => {
       <div class="logo">
         <div class="logo-icon">✿</div>
         <div class="logo-text">
-          <BlurReveal :duration="1.2" :delay="0.2" :blur="'15px'" :yOffset="10" class="blur-reveal-container">
+          <BlurReveal :duration="0.75" :delay="0.2" :blur="'15px'" :yOffset="10" class="blur-reveal-container">
             <h1 class="site-title">胖胖藏</h1>
             <p class="site-desc">✨ 分享技术与生活 ✨</p>
           </BlurReveal>
