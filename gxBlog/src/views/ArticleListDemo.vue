@@ -1,8 +1,29 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, onUnmounted } from 'vue'
 import articleApi from '../api/articleApi'
 import type { ArticleListItem, Pagination } from '../types/article'
 import { debugLog, debugError } from '../utils/debug'
+// 导入组件
+import ArticleCard from '../components/ArticleCard.vue'
+import CategoryButtons from '../components/CategoryButtons.vue'
+// 导入Naive UI组件
+import {
+  NCard,
+  NButton,
+  NSpace,
+  NSpin,
+  NEmpty,
+  NPagination,
+  NGrid,
+  NGridItem,
+  NPageHeader,
+  NIcon,
+  NLayout,
+  NLayoutContent,
+  NBackTop
+} from 'naive-ui'
+// 导入图标
+import { ArrowUpOutline } from '@vicons/ionicons5'
 
 // 状态变量
 const articles = ref<ArticleListItem[]>([])
@@ -62,7 +83,6 @@ const fetchArticles = async (page = 1) => {
 
 // 切换分类
 const changeCategory = (categoryId: string) => {
-  selectedCategory.value = categoryId === selectedCategory.value ? '' : categoryId
   fetchArticles(1)
 }
 
@@ -96,118 +116,122 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="article-list-demo">
-    <div class="page-header">
-      <h1 class="page-title">所有文章</h1>
-      <p class="page-description">探索各种技术文章和个人见解</p>
-    </div>
+  <n-layout class="article-list-container">
+    <!-- 装饰元素 -->
+    <div class="decoration-circle decoration-circle-1"></div>
+    <div class="decoration-circle decoration-circle-2"></div>
+    <div class="decoration-circle decoration-circle-3"></div>
 
-    <!-- 分类筛选区域 -->
-    <div class="category-section">
-      <div class="category-tags">
-        <button class="category-tag" :class="{ active: selectedCategory === '' }" @click="changeCategory('')">
-          全部
-        </button>
-        <button v-for="category in categories" :key="category.categoryId" class="category-tag"
-          :class="{ active: selectedCategory === category.categoryId }" @click="changeCategory(category.categoryId)">
-          {{ category.name }}
-        </button>
-      </div>
-    </div>
+    <n-layout-content>
+      <!-- 页面标题区域 -->
+      <n-page-header class="page-header" subtitle="探索各种技术文章和个人见解">
+        <template #title>
+          <h1 class="page-title">所有文章</h1>
+        </template>
+      </n-page-header>
 
-    <!-- 加载状态 -->
-    <div v-if="loading" class="loading">
-      <div class="spinner"></div>
-      <p>加载中...</p>
-    </div>
+      <!-- 分类筛选区域 -->
+      <CategoryButtons :categories="categories" v-model:selectedCategory="selectedCategory" @change="changeCategory" />
 
-    <!-- 文章列表 -->
-    <div v-else>
-      <div v-if="articles.length === 0" class="empty-state">
-        <p>没有找到相关文章</p>
+      <!-- 加载状态 -->
+      <div v-if="loading" class="loading-container">
+        <n-spin size="large" />
+        <p>加载中...</p>
       </div>
 
-      <div v-else class="article-list">
-        <div v-for="article in articles" :key="article.articleId" class="article-item">
-          <div class="article-image" v-if="article.coverImage">
-            <img :src="article.coverImage" :alt="article.title" />
-          </div>
-          <h2 class="article-title">{{ article.title }}</h2>
-          <div class="article-meta">
-            <span class="article-author">{{ article.author }}</span>
-            <span class="article-date">{{ formatDate(article.createTime) }}</span>
-          </div>
-          <p class="article-preview">{{ article.preview }}</p>
-          <div class="article-footer">
-            <div class="article-tags" v-if="article.tags && article.tags.length">
-              <span v-for="(tag, index) in article.tags" :key="index" class="article-tag">{{ tag }}</span>
-            </div>
-            <div class="article-stats">
-              <span class="view-count" v-if="article.viewCount">👁️ {{ article.viewCount }}</span>
-              <span class="comment-count" v-if="article.commentCount">💬 {{ article.commentCount }}</span>
-            </div>
-          </div>
-          <router-link :to="`/article/${article.articleId}`" class="read-more">
-            阅读全文
-          </router-link>
+      <!-- 文章列表 -->
+      <div v-else>
+        <!-- 空状态 -->
+        <n-card v-if="articles.length === 0" class="empty-state-card">
+          <n-empty description="没有找到相关文章" size="large">
+            <template #extra>
+              <n-button type="primary" @click="changeCategory('')" size="small" class="empty-state-button">
+                查看全部文章
+              </n-button>
+            </template>
+          </n-empty>
+        </n-card>
+
+        <!-- 文章列表 -->
+        <n-grid v-else x-gap="16" y-gap="16" cols="1 s:1 m:2 l:3" responsive="screen">
+          <n-grid-item v-for="article in articles" :key="article.articleId">
+            <ArticleCard :article="article" />
+          </n-grid-item>
+        </n-grid>
+
+        <!-- 分页 -->
+        <div class="pagination-container" v-if="pagination.totalPages > 1">
+          <n-pagination v-model:page="pagination.currentPage" :page-count="pagination.totalPages" :page-sizes="[10]"
+            :page-size="pagination.pageSize" :item-count="pagination.total" @update:page="changePage"
+            show-quick-jumper />
         </div>
       </div>
+    </n-layout-content>
 
-      <!-- 分页 -->
-      <div class="pagination" v-if="pagination.totalPages > 1">
-        <button class="page-btn prev" :disabled="pagination.currentPage === 1"
-          @click="changePage(pagination.currentPage - 1)">
-          上一页
-        </button>
-
-        <button v-for="page in pagination.totalPages" :key="page" class="page-btn"
-          :class="{ active: page === pagination.currentPage }" @click="changePage(page)">
-          {{ page }}
-        </button>
-
-        <button class="page-btn next" :disabled="pagination.currentPage === pagination.totalPages"
-          @click="changePage(pagination.currentPage + 1)">
-          下一页
-        </button>
+    <!-- 回到顶部按钮 -->
+    <n-back-top :right="30" :bottom="30">
+      <div class="back-top-btn">
+        <n-icon size="20">
+          <arrow-up-outline />
+        </n-icon>
       </div>
-    </div>
-  </div>
+    </n-back-top>
+  </n-layout>
 </template>
 
 <style scoped>
-.article-list-demo {
+.article-list-container {
   max-width: 1200px;
   margin: 0 auto;
   padding: 30px 20px;
-  background: linear-gradient(to bottom, #f9f4ff, #fff8fa);
+  background: linear-gradient(to bottom, #f8f9ff, #fff8f8);
   position: relative;
   overflow: hidden;
+  animation: fadeIn 0.8s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* 装饰元素 */
-.article-list-demo::before,
-.article-list-demo::after {
-  content: '';
+.decoration-circle {
   position: absolute;
+  border-radius: 50%;
+  background: linear-gradient(145deg, rgba(74, 107, 223, 0.05), rgba(107, 157, 255, 0.1));
+  z-index: 0;
+}
+
+.decoration-circle-1 {
+  width: 300px;
+  height: 300px;
+  top: -100px;
+  right: -100px;
+  animation: float 15s infinite ease-in-out;
+}
+
+.decoration-circle-2 {
+  width: 200px;
+  height: 200px;
+  bottom: 20%;
+  left: -80px;
+  animation: float 18s infinite ease-in-out reverse;
+}
+
+.decoration-circle-3 {
   width: 150px;
   height: 150px;
-  border-radius: 50%;
-  z-index: -1;
-  opacity: 0.1;
-  animation: float 15s infinite ease-in-out alternate;
-}
-
-.article-list-demo::before {
-  background: linear-gradient(45deg, #ff9a9e, #fad0c4);
-  top: -50px;
-  left: -50px;
-}
-
-.article-list-demo::after {
-  background: linear-gradient(45deg, #a18cd1, #fbc2eb);
-  bottom: -50px;
-  right: -50px;
-  animation-delay: 2s;
+  bottom: 10%;
+  right: 10%;
+  animation: float 12s infinite ease-in-out;
 }
 
 @keyframes float {
@@ -215,371 +239,168 @@ onMounted(() => {
     transform: translate(0, 0) rotate(0deg);
   }
 
+  25% {
+    transform: translate(10px, 10px) rotate(5deg);
+  }
+
+  50% {
+    transform: translate(0, 15px) rotate(0deg);
+  }
+
+  75% {
+    transform: translate(-10px, 5px) rotate(-5deg);
+  }
+
   100% {
-    transform: translate(20px, 20px) rotate(10deg);
+    transform: translate(0, 0) rotate(0deg);
   }
 }
 
 /* 页面标题区域 */
 .page-header {
-  text-align: center;
   margin-bottom: 1.5rem;
-  position: relative;
+  background-color: transparent;
 }
 
 .page-title {
   font-size: 2.5rem;
-  color: #6a3093;
+  color: #4a6bdf;
   margin-bottom: 0.5rem;
   font-weight: 700;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
   position: relative;
   display: inline-block;
+  padding-bottom: 10px;
 }
 
 .page-title::after {
   content: '';
   position: absolute;
-  bottom: -10px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 80px;
+  bottom: 0;
+  left: 0;
+  width: 60px;
   height: 4px;
-  background: linear-gradient(to right, #a18cd1, #fbc2eb);
+  background: linear-gradient(90deg, #4a6bdf, #6b9dff);
   border-radius: 2px;
 }
 
-.page-description {
-  font-size: 1.1rem;
-  color: #8e8e8e;
-  max-width: 600px;
-  margin: 1rem auto 0;
-  line-height: 1.6;
-}
-
-/* 分类筛选区域 */
-.category-section {
-  margin-bottom: 2rem;
-  background-color: rgba(255, 255, 255, 0.7);
-  padding: 1rem;
-  border-radius: 16px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-  border: 1px solid rgba(161, 140, 209, 0.2);
-}
-
-.category-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.8rem;
-  justify-content: center;
-}
-
-.category-tag {
-  background: white;
-  color: #6a3093;
-  border: 1px solid rgba(161, 140, 209, 0.3);
-  padding: 0.5rem 1.2rem;
-  border-radius: 30px;
-  font-size: 0.95rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-}
-
-.category-tag:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(161, 140, 209, 0.2);
-  border-color: rgba(161, 140, 209, 0.5);
-}
-
-.category-tag.active {
-  background: linear-gradient(to right, #a18cd1, #fbc2eb);
-  color: white;
-  border-color: transparent;
-  box-shadow: 0 4px 10px rgba(161, 140, 209, 0.3);
-}
+/* 分类筛选区域样式已移至CategoryButtons组件 */
 
 /* 加载状态 */
-.loading {
+.loading-container {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   padding: 4rem 0;
+  animation: pulse 1.5s infinite ease-in-out alternate;
 }
 
-.spinner {
-  width: 50px;
-  height: 50px;
-  border: 4px solid rgba(161, 140, 209, 0.2);
-  border-radius: 50%;
-  border-top-color: #a18cd1;
-  animation: spin 1s ease-in-out infinite;
-  margin-bottom: 1rem;
-  box-shadow: 0 0 10px rgba(161, 140, 209, 0.3);
-}
+@keyframes pulse {
+  from {
+    opacity: 0.7;
+  }
 
-@keyframes spin {
   to {
-    transform: rotate(360deg);
+    opacity: 1;
   }
 }
 
-/* 空状态 */
-.empty-state {
-  text-align: center;
-  padding: 3rem;
-  background-color: rgba(255, 255, 255, 0.8);
-  border-radius: 16px;
-  color: #777;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
-  border: 1px dashed #d9c6f7;
-}
-
-/* 文章列表 */
-.article-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 2rem;
-}
-
-.article-item {
-  background-color: white;
-  border-radius: 16px;
-  padding: 1.5rem;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
-  transition: all 0.4s ease;
-  border: 1px solid rgba(161, 140, 209, 0.1);
-  position: relative;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-}
-
-.article-item::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: linear-gradient(to right, #a18cd1, #fbc2eb);
-  transform: scaleX(0);
-  transform-origin: left;
-  transition: transform 0.4s ease;
-}
-
-.article-item:hover {
-  transform: translateY(-8px) scale(1.02);
-  box-shadow: 0 15px 30px rgba(161, 140, 209, 0.2);
-  border-color: rgba(161, 140, 209, 0.3);
-}
-
-.article-item:hover::before {
-  transform: scaleX(1);
-}
-
-.article-image {
-  margin: -1.5rem -1.5rem 1.5rem -1.5rem;
-  height: 180px;
-  overflow: hidden;
-  position: relative;
-  border-radius: 16px 16px 0 0;
-}
-
-.article-image::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 60px;
-  background: linear-gradient(to top, rgba(255, 255, 255, 0.9), transparent);
-  z-index: 1;
-}
-
-.article-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.5s ease;
-}
-
-.article-item:hover .article-image img {
-  transform: scale(1.05) rotate(1deg);
-}
-
-.article-title {
-  font-size: 1.5rem;
-  margin-bottom: 0.8rem;
-  font-weight: 700;
-  background: linear-gradient(to right, #6a3093, #a044ff);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  line-height: 1.3;
-}
-
-.article-meta {
-  display: flex;
-  gap: 1rem;
-  font-size: 0.9rem;
-  color: #888;
-  margin-bottom: 1rem;
-  align-items: center;
-}
-
-.article-author::before {
-  content: '👤 ';
-}
-
-.article-date::before {
-  content: '📅 ';
-}
-
-.article-preview {
-  color: #666;
-  line-height: 1.7;
-  margin-bottom: 1.2rem;
-  position: relative;
-  padding-left: 1rem;
-  border-left: 2px solid #f0e6ff;
-  flex-grow: 1;
-}
-
-.article-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-.article-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-.article-tag {
-  background: linear-gradient(to right, #e0c3fc, #8ec5fc);
-  color: white;
-  padding: 0.3rem 0.8rem;
-  border-radius: 20px;
-  font-size: 0.8rem;
+.loading-container p {
+  margin-top: 16px;
+  color: #4a6bdf;
   font-weight: 500;
-  box-shadow: 0 2px 5px rgba(142, 197, 252, 0.3);
-  transition: all 0.3s;
+  letter-spacing: 1px;
 }
 
-.article-tag:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(142, 197, 252, 0.4);
+/* 为卡片添加延迟动画 */
+n-grid-item:nth-child(3n+1) .article-card {
+  animation-delay: 0.1s;
 }
 
-.article-stats {
-  display: flex;
-  gap: 1rem;
-  font-size: 0.85rem;
-  color: #888;
+n-grid-item:nth-child(3n+2) .article-card {
+  animation-delay: 0.2s;
 }
 
-.view-count,
-.comment-count {
-  display: flex;
-  align-items: center;
-  gap: 0.3rem;
-  transition: all 0.3s;
+n-grid-item:nth-child(3n+3) .article-card {
+  animation-delay: 0.3s;
 }
 
-.view-count:hover,
-.comment-count:hover {
-  color: #6a3093;
-  transform: scale(1.1);
-}
-
-.read-more {
-  display: inline-block;
-  color: #a044ff;
-  text-decoration: none;
-  font-weight: 600;
-  transition: all 0.3s;
-  position: relative;
-  padding: 0.3rem 0;
-}
-
-.read-more::after {
-  content: ' →';
-  opacity: 0;
-  transform: translateX(-5px);
-  display: inline-block;
-  transition: all 0.3s;
-}
-
-.read-more:hover {
-  color: #6a3093;
-}
-
-.read-more:hover::after {
-  opacity: 1;
-  transform: translateX(3px);
-}
-
-/* 分页 */
-.pagination {
+/* 分页容器 */
+.pagination-container {
   display: flex;
   justify-content: center;
   margin-top: 3rem;
-  gap: 0.5rem;
-}
-
-.page-btn {
-  background: linear-gradient(to bottom, #f9f4ff, #fff8fa);
-  border: 1px solid rgba(161, 140, 209, 0.3);
-  padding: 0.6rem 1.2rem;
+  padding: 15px;
+  background-color: rgba(255, 255, 255, 0.8);
   border-radius: 30px;
-  cursor: pointer;
-  transition: all 0.3s;
-  color: #6a3093;
-  font-weight: 600;
-  min-width: 40px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 15px rgba(74, 107, 223, 0.08);
+  backdrop-filter: blur(5px);
+  animation: fadeIn 0.8s ease-in-out;
+  animation-delay: 0.5s;
+  animation-fill-mode: both;
 }
 
-.page-btn:hover:not(:disabled) {
-  background: linear-gradient(to right, #a18cd1, #fbc2eb);
-  color: white;
+/* 空状态卡片 */
+.empty-state-card {
+  padding: 40px 20px;
+  border-radius: 16px;
+  background: linear-gradient(145deg, #ffffff, #f7f9ff);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+  animation: fadeIn 0.8s ease-in-out;
+}
+
+.empty-state-button {
+  margin-top: 16px;
+  border-radius: 20px;
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+.empty-state-button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 5px 10px rgba(161, 140, 209, 0.3);
+  box-shadow: 0 5px 15px rgba(74, 107, 223, 0.3);
 }
 
-.page-btn.active {
-  background: linear-gradient(to right, #a18cd1, #fbc2eb);
+/* 回到顶部按钮 */
+.back-top-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #4a6bdf, #6b9dff);
   color: white;
-  box-shadow: 0 5px 10px rgba(161, 140, 209, 0.3);
+  box-shadow: 0 4px 10px rgba(74, 107, 223, 0.3);
+  transition: all 0.3s ease;
 }
 
-.page-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+.back-top-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 15px rgba(74, 107, 223, 0.4);
 }
 
 /* 响应式设计 */
 @media (max-width: 768px) {
-  .article-list {
-    grid-template-columns: 1fr;
-  }
-
-  .article-meta {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.3rem;
-  }
-
   .page-title {
     font-size: 2rem;
+  }
+
+  .article-image {
+    height: 180px;
+  }
+
+  .article-content {
+    padding: 20px;
+  }
+
+  .article-title {
+    font-size: 1.2rem;
+  }
+
+  .article-preview {
+    -webkit-line-clamp: 2;
   }
 }
 </style>
