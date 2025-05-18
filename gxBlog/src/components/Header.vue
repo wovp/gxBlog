@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import BlurReveal from './ui/BlurReveal.vue'
+import RainbowButton from './ui/RainbowButton.vue'
 
 const router = useRouter()
 const activeIndex = ref('4')
@@ -33,8 +35,10 @@ const handleSelect = (key: string) => {
       <div class="logo">
         <div class="logo-icon">✿</div>
         <div class="logo-text">
-          <h1 class="site-title">胖胖藏</h1>
-          <p class="site-desc">✨ 分享技术与生活 ✨</p>
+          <BlurReveal :duration="1.2" :delay="0.2" :blur="'15px'" :yOffset="10" class="blur-reveal-container">
+            <h1 class="site-title">胖胖藏</h1>
+            <p class="site-desc">✨ 分享技术与生活 ✨</p>
+          </BlurReveal>
         </div>
       </div>
       <nav class="nav-menu">
@@ -132,6 +136,12 @@ const handleSelect = (key: string) => {
   flex-direction: column;
 }
 
+.blur-reveal-container {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
 .site-title {
   font-family: 'Mochiy Pop One', sans-serif;
   font-size: 1.8rem;
@@ -163,6 +173,13 @@ const handleSelect = (key: string) => {
   color: #ff9dbb;
   margin: 0;
   letter-spacing: 1px;
+  text-shadow: 0 0 5px rgba(255, 157, 187, 0.3);
+  opacity: 0.9;
+  transition: opacity 0.3s ease;
+}
+
+.logo:hover .site-desc {
+  opacity: 1;
 }
 
 .nav-menu ul {
@@ -173,7 +190,8 @@ const handleSelect = (key: string) => {
 }
 
 .nav-menu li {
-  margin-left: 2rem;
+  margin-left: 1.5rem;
+  margin-bottom: 0.5rem;
 }
 
 .nav-menu a {
@@ -323,6 +341,20 @@ const handleSelect = (key: string) => {
 
   50% {
     transform: translateY(-10px);
+  }
+}
+
+@keyframes gradient {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
   }
 }
 

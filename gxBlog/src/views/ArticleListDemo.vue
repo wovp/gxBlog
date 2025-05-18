@@ -25,6 +25,8 @@ import {
 // 导入图标
 import { ArrowUpOutline } from '@vicons/ionicons5'
 
+import Text3d from '../components/ui/Text3d.vue'
+
 // 状态变量
 const articles = ref<ArticleListItem[]>([])
 const pagination = ref<Pagination>({
@@ -126,8 +128,11 @@ onMounted(() => {
       <!-- 页面标题区域 -->
       <n-page-header class="page-header" subtitle="探索各种技术文章和个人见解">
         <template #title>
-          <h1 class="page-title">所有文章</h1>
+          <Text3d>
+            所有文章
+          </Text3d>
         </template>
+
       </n-page-header>
 
       <!-- 分类筛选区域 -->
@@ -153,8 +158,8 @@ onMounted(() => {
         </n-card>
 
         <!-- 文章列表 -->
-        <n-grid v-else x-gap="16" y-gap="16" cols="1 s:1 m:2 l:3" responsive="screen">
-          <n-grid-item v-for="article in articles" :key="article.articleId">
+        <n-grid v-else x-gap="24" y-gap="24" cols="1 s:1 m:2 l:3" responsive="screen" class="article-grid">
+          <n-grid-item v-for="article in articles" :key="article.articleId" class="article-grid-item">
             <ArticleCard :article="article" />
           </n-grid-item>
         </n-grid>
@@ -313,16 +318,27 @@ onMounted(() => {
   letter-spacing: 1px;
 }
 
+/* 文章网格样式 */
+.article-grid {
+  margin: 20px 0;
+}
+
+.article-grid-item {
+  perspective: 1000px;
+  transform-style: preserve-3d;
+  min-height: 450px;
+}
+
 /* 为卡片添加延迟动画 */
-n-grid-item:nth-child(3n+1) .article-card {
+.article-grid-item:nth-child(3n+1) {
   animation-delay: 0.1s;
 }
 
-n-grid-item:nth-child(3n+2) .article-card {
+.article-grid-item:nth-child(3n+2) {
   animation-delay: 0.2s;
 }
 
-n-grid-item:nth-child(3n+3) .article-card {
+.article-grid-item:nth-child(3n+3) {
   animation-delay: 0.3s;
 }
 
@@ -387,20 +403,18 @@ n-grid-item:nth-child(3n+3) .article-card {
     font-size: 2rem;
   }
 
-  .article-image {
-    height: 180px;
+  .article-grid-item {
+    min-height: 400px;
+  }
+}
+
+@media (max-width: 480px) {
+  .article-grid-item {
+    min-height: 380px;
   }
 
-  .article-content {
-    padding: 20px;
-  }
-
-  .article-title {
-    font-size: 1.2rem;
-  }
-
-  .article-preview {
-    -webkit-line-clamp: 2;
+  .article-grid {
+    margin: 10px 0;
   }
 }
 </style>

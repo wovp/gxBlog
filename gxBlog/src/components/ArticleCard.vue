@@ -3,7 +3,6 @@ import { computed } from 'vue'
 import type { ArticleListItem } from '../types/article'
 // 导入Naive UI组件
 import {
-  NCard,
   NButton,
   NSpace,
   NTag,
@@ -13,6 +12,10 @@ import {
 } from 'naive-ui'
 // 导入图标
 import { EyeOutline, ChatbubbleOutline } from '@vicons/ionicons5'
+// 导入3D卡片组件
+import CardContainer from './ui/card/CardContainer.vue'
+import CardBody from './ui/card/CardBody.vue'
+import CardItem from './ui/card/CardItem.vue'
 
 // 定义组件属性
 const props = defineProps<{
@@ -27,73 +30,120 @@ const formatDate = (dateStr: string) => {
 </script>
 
 <template>
-  <n-card class="article-card" hoverable content-style="padding: 0;" :segmented="{ content: true }">
-    <!-- 文章封面图 -->
-    <template v-if="article.coverImage" #cover>
-      <n-image :src="article.coverImage" :alt="article.title" object-fit="cover" class="article-image" />
-    </template>
+  <CardContainer class="article-card-container">
+    <CardBody class="article-card-body">
+      <!-- 文章卡片背景 -->
+      <CardItem :translateZ="-20" class="article-card-bg"></CardItem>
 
-    <!-- 文章内容 -->
-    <div class="article-content">
-      <div class="article-meta">
-        <div class="article-author">胖胖藏</div>
-        <div class="article-date">{{ formatDate(article.createTime) }}</div>
-      </div>
-
-      <h3 class="article-title">{{ article.title }}</h3>
-
-      <n-text depth="3" class="article-preview">{{ article.preview }}</n-text>
-
-      <div class="article-footer">
-        <!-- 文章标签 -->
-        <div class="article-tags" v-if="article.tags && article.tags.length">
-          <n-tag v-for="(tag, index) in article.tags" :key="index" type="primary" size="small" class="article-tag"
-            :bordered="false">
-            {{ tag }}
-          </n-tag>
+      <!-- 文章卡片主体 -->
+      <CardItem :translateZ="0" class="article-card">
+        <!-- 文章封面图 -->
+        <div v-if="article.coverImage" class="article-image-container">
+          <CardItem :translateZ="30" class="article-image-wrapper">
+            <n-image :src="article.coverImage" :alt="article.title" object-fit="cover" class="article-image" />
+          </CardItem>
         </div>
-        <!-- 文章统计 -->
-        <div class="article-stats">
-          <n-space size="small">
-            <n-text v-if="article.viewCount" class="view-count">
-              <n-icon size="16">
-                <eye-outline />
-              </n-icon>
-              {{ article.viewCount }}
-            </n-text>
-            <n-text v-if="article.commentCount" class="comment-count">
-              <n-icon size="16">
-                <chatbubble-outline />
-              </n-icon>
-              {{ article.commentCount }}
-            </n-text>
-          </n-space>
-        </div>
-      </div>
 
-      <div class="read-more-container">
-        <router-link :to="`/article/${article.articleId}`" custom v-slot="{ navigate }">
-          <n-button type="primary" ghost class="read-more-btn" @click="navigate">
-            阅读全文
-          </n-button>
-        </router-link>
-      </div>
-    </div>
-  </n-card>
+        <!-- 文章内容 -->
+        <div class="article-content">
+          <div class="article-meta">
+            <CardItem :translateZ="20" :translateY="-5" class="article-author">胖胖藏</CardItem>
+            <CardItem :translateZ="15" class="article-date">{{ formatDate(article.createTime) }}</CardItem>
+          </div>
+
+          <CardItem :translateZ="25" :translateY="-3">
+            <h3 class="article-title">{{ article.title }}</h3>
+          </CardItem>
+
+          <CardItem :translateZ="15">
+            <n-text depth="3" class="article-preview">{{ article.preview }}</n-text>
+          </CardItem>
+
+          <div class="article-footer">
+            <!-- 文章标签 -->
+            <div class="article-tags" v-if="article.tags && article.tags.length">
+              <CardItem v-for="(tag, index) in article.tags" :key="index" :translateZ="20 + index * 5"
+                :translateX="index * 3">
+                <n-tag type="primary" size="small" class="article-tag" :bordered="false">
+                  {{ tag }}
+                </n-tag>
+              </CardItem>
+            </div>
+            <!-- 文章统计 -->
+            <div class="article-stats">
+              <n-space size="small">
+                <CardItem :translateZ="25" :translateY="-2" v-if="article.viewCount">
+                  <n-text class="view-count">
+                    <n-icon size="16">
+                      <eye-outline />
+                    </n-icon>
+                    {{ article.viewCount }}
+                  </n-text>
+                </CardItem>
+                <CardItem :translateZ="25" :translateY="-2" v-if="article.commentCount">
+                  <n-text class="comment-count">
+                    <n-icon size="16">
+                      <chatbubble-outline />
+                    </n-icon>
+                    {{ article.commentCount }}
+                  </n-text>
+                </CardItem>
+              </n-space>
+            </div>
+          </div>
+
+          <div class="read-more-container">
+            <router-link :to="`/article/${article.articleId}`" custom v-slot="{ navigate }">
+              <CardItem :translateZ="40" :translateY="-5">
+                <n-button type="primary" ghost class="read-more-btn" @click="navigate">
+                  阅读全文
+                </n-button>
+              </CardItem>
+            </router-link>
+          </div>
+        </div>
+      </CardItem>
+    </CardBody>
+  </CardContainer>
 </template>
 
 <style scoped>
+/* 3D卡片容器 */
+.article-card-container {
+  height: 100%;
+  width: 100%;
+}
+
+.article-card-body {
+  height: auto;
+  width: 100%;
+  min-height: 400px;
+}
+
+/* 卡片背景 */
+.article-card-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 20px;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(247, 249, 255, 0.8));
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(5px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
 /* 文章卡片 */
 .article-card {
+  width: 100%;
   height: 100%;
   display: flex;
   flex-direction: column;
-  transition: all 0.3s ease;
   border-radius: 16px;
   overflow: hidden;
   border: none;
-  background: linear-gradient(145deg, #ffffff, #f7f9ff);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+  background: transparent;
   animation: fadeInUp 0.8s ease-out;
   animation-fill-mode: both;
 }
@@ -131,16 +181,30 @@ const formatDate = (dateStr: string) => {
   opacity: 1;
 }
 
-.article-image {
+.article-image-container {
+  position: relative;
   height: 200px;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 16px 16px 0 0;
+}
+
+.article-image-wrapper {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.article-image {
+  height: 100%;
   width: 100%;
   object-fit: cover;
   transition: all 0.5s ease;
   filter: brightness(0.95);
+  border-radius: 8px 8px 0 0;
 }
 
-.article-card:hover .article-image {
-  transform: scale(1.05);
+.article-card-container:hover .article-image {
   filter: brightness(1.05);
 }
 
@@ -290,12 +354,13 @@ const formatDate = (dateStr: string) => {
   color: #4a6bdf;
   font-weight: 500;
   letter-spacing: 1px;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(4px);
 }
 
 .read-more-btn:hover {
   background-color: #4a6bdf;
   color: white;
-  transform: translateY(-2px);
   box-shadow: 0 5px 15px rgba(74, 107, 223, 0.3);
 }
 
