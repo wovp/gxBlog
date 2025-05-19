@@ -27,6 +27,7 @@ import { ArrowUpOutline } from '@vicons/ionicons5'
 
 import Text3d from '../components/ui/Text3d.vue'
 import LetterPullup from '../components/ui/LetterPullup.vue'
+import SnowfallBg from '../components/ui/SnowfallBg.vue'
 
 // 状态变量
 const articles = ref<ArticleListItem[]>([])
@@ -119,13 +120,16 @@ onMounted(() => {
 </script>
 
 <template>
-  <n-layout class="article-list-container">
-    <!-- 装饰元素 -->
-    <div class="decoration-circle decoration-circle-1"></div>
-    <div class="decoration-circle decoration-circle-2"></div>
-    <div class="decoration-circle decoration-circle-3"></div>
+  <n-layout class="article-list-container min-h-screen relative">
+    <template #background>
+      <!-- 雪花背景效果,实际上没有生效 -->
+      <SnowfallBg class="absolute inset-0 z-0 w-full h-full" color="#D0E8FF" :quantity="200" :speed="0.6"
+        :min-radius="0.3" :max-radius="2" pointer-events-none>
+      </SnowfallBg>
 
-    <n-layout-content>
+    </template>
+
+    <n-layout-content class="relative z-10">
       <!-- 页面标题区域 -->
       <n-page-header class="page-header">
         <template #title>
@@ -192,10 +196,13 @@ onMounted(() => {
   max-width: 1200px;
   margin: 0 auto;
   padding: 30px 20px;
-  background: linear-gradient(to bottom, #f8f9ff, #fff8f8);
+  background: transparent;
+  /* 移除背景色，让雪花背景可见 */
   position: relative;
   overflow: hidden;
   animation: fadeIn 0.8s ease-in-out;
+  backdrop-filter: blur(1px);
+  /* 添加轻微模糊效果增强视觉层次感 */
 }
 
 @keyframes fadeIn {
@@ -210,36 +217,27 @@ onMounted(() => {
   }
 }
 
-/* 装饰元素 */
-.decoration-circle {
-  position: absolute;
-  border-radius: 50%;
-  background: linear-gradient(145deg, rgba(74, 107, 223, 0.05), rgba(107, 157, 255, 0.1));
-  z-index: 0;
-}
+/* 装饰元素 - 已由雪花背景替代，保留动画定义供其他元素使用 */
+@keyframes float {
+  0% {
+    transform: translate(0, 0) rotate(0deg);
+  }
 
-.decoration-circle-1 {
-  width: 300px;
-  height: 300px;
-  top: -100px;
-  right: -100px;
-  animation: float 15s infinite ease-in-out;
-}
+  25% {
+    transform: translate(10px, 10px) rotate(5deg);
+  }
 
-.decoration-circle-2 {
-  width: 200px;
-  height: 200px;
-  bottom: 20%;
-  left: -80px;
-  animation: float 18s infinite ease-in-out reverse;
-}
+  50% {
+    transform: translate(0, 15px) rotate(0deg);
+  }
 
-.decoration-circle-3 {
-  width: 150px;
-  height: 150px;
-  bottom: 10%;
-  right: 10%;
-  animation: float 12s infinite ease-in-out;
+  75% {
+    transform: translate(-10px, 5px) rotate(-5deg);
+  }
+
+  100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
 }
 
 @keyframes float {
@@ -352,9 +350,9 @@ onMounted(() => {
   justify-content: center;
   margin-top: 3rem;
   padding: 15px;
-  background-color: rgba(255, 255, 255, 0.8);
+  background-color: rgba(255, 255, 255, 0.85);
   border-radius: 30px;
-  box-shadow: 0 4px 15px rgba(74, 107, 223, 0.08);
+  box-shadow: 0 4px 15px rgba(74, 107, 223, 0.12);
   backdrop-filter: blur(5px);
   animation: fadeIn 0.8s ease-in-out;
   animation-delay: 0.5s;
@@ -365,8 +363,9 @@ onMounted(() => {
 .empty-state-card {
   padding: 40px 20px;
   border-radius: 16px;
-  background: linear-gradient(145deg, #ffffff, #f7f9ff);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 8px 20px rgba(74, 107, 223, 0.1);
+  backdrop-filter: blur(5px);
   animation: fadeIn 0.8s ease-in-out;
 }
 

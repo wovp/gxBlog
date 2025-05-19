@@ -239,6 +239,7 @@ onMounted(() => {
   overflow: hidden;
   box-shadow: 0 10px 30px rgba(166, 192, 254, 0.3);
   transition: all 0.5s ease;
+  width: 100%;
 }
 
 .hero:hover {

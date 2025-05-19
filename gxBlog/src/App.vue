@@ -22,12 +22,13 @@ import Footer from './components/Footer.vue'
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  width: 100%;
 }
 
 .main-content {
-  flex: 1;
+  /* flex: 1; */
   padding: 20px;
-  max-width: 1800px;
+  /* max-width: 2480px; */
   margin: 0 auto;
   width: 100%;
 }
