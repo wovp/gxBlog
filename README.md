@@ -19,7 +19,7 @@ gxBlog 是一个基于 Vue 3、TypeScript 和 Vite 构建的现代化博客系�
 
 ## 主要功能
 - 博客文章展示与管理
-- 文章详情、分类、标签、搜索
+- 文章详情、分类、标签
 - 个人主页（homepage 子项目集成）
 - 支持 Markdown 编辑与渲染
 - 响应式设计，适配多端
@@ -32,50 +32,6 @@ gxBlog 是一个基于 Vue 3、TypeScript 和 Vite 构建的现代化博客系�
 
 ## 安装与启动
 
-### 1. 克隆项目
-```bash
-git clone <your-repo-url>
-cd gxBlog
-```
-
-### 2. 安装前端依赖并启动
-```bash
-cd gxBlog
-yarn install # 或 npm install
-npm run dev
-```
-
-### 3. 启动后端服务
-```bash
-cd ../backend
-pip install -r requirements.txt
-uvicorn main:app --reload
-```
-
-### 4. Docker 一键部署（可选）
-```bash
-docker-compose up --build
-```
-
-## 打包与部署
-
-前端打包：
-```bash
-cd gxBlog
-npm run build
-```
-打包后静态文件位于 `gxBlog/dist`，可部署至任意静态服务器。
-
-## 目录说明
-- `gxBlog/public/homepage/`：个人主页子项目静态资源，已通过 `/homepage` 路由集成到主站。
-- `backend/`：FastAPI 后端服务，包含 API、数据库模型、定时任务等。
-- `docker-compose.yml`：支持前后端一键部署。
-
-## 相关文档
-- [Vue3 官方文档](https://vuejs.org/)
-- [Vite 官方文档](https://vitejs.dev/)
-- [FastAPI 官方文档](https://fastapi.tiangolo.com/)
-
----
+详细的部署过程可以看：https://mp.weixin.qq.com/s/e0BzkEckKNxBFj3M_F1Bcw
 
 如需更多帮助或有任何疑问，请联系项目维护者。

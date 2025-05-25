@@ -46,25 +46,7 @@ AUTO_BLACKLIST_EXPIRE=3600
 
 系统支持配置IP白名单和黑名单，用于控制访问权限：
 
-- **白名单**：只有在白名单中的IP地址才能访问系统。如果白名单为空，则不进行白名单检查。
-- **黑名单**：在黑名单中的IP地址将被禁止访问系统。
-- **自动黑名单**：系统会自动将频繁触发限流的IP地址临时加入黑名单，防止恶意请求。
-
-配置方法：
-
-```env
-# IP白名单，多个IP用逗号分隔
-IP_WHITELIST=127.0.0.1,192.168.1.100
-
-# IP黑名单，多个IP用逗号分隔
-IP_BLACKLIST=1.2.3.4,5.6.7.8
-
-# 触发限流多少次后自动加入黑名单
-AUTO_BLACKLIST_THRESHOLD=5
-
-# 自动黑名单的过期时间（秒）
-AUTO_BLACKLIST_EXPIRE=3600
-```
+系统主要支持自动化黑名单变动，当有IP地址多次触发限流时，系统会自动将其加入临时黑名单，在一定时间内拒绝所有来自该IP的请求。该配置自动生效，无法关闭。
 
 ## 配置方法
 
@@ -95,35 +77,6 @@ IP_BLACKLIST=
 
 速率限制功能依赖于Redis，请确保已安装并运行Redis服务器。
 
-#### Windows安装Redis
-
-1. 下载Redis for Windows：https://github.com/microsoftarchive/redis/releases
-2. 安装并启动Redis服务
-3. 或者使用WSL2安装Linux版本的Redis
-
-#### Linux/macOS安装Redis
-
-```bash
-# Ubuntu/Debian
-sudo apt update
-sudo apt install redis-server
-
-# CentOS/RHEL
-sudo yum install redis
-
-# macOS
-brew install redis
-```
-
-启动Redis服务：
-
-```bash
-# Linux
-sudo systemctl start redis
-
-# macOS
-brew services start redis
-```
 
 ## 安全中间件说明
 
@@ -157,20 +110,6 @@ brew services start redis
 - `get_client_ip`：获取客户端真实IP地址
 - `log_security_event`：记录安全事件
 
-## 最佳实践
-
-1. **生产环境配置**
-   - 在生产环境中，设置合理的速率限制值
-   - 配置IP白名单，只允许可信IP访问管理接口
-   - 使用HTTPS加密传输
-
-2. **监控与日志**
-   - 定期检查安全日志
-   - 监控被拒绝的请求和触发速率限制的IP
-
-3. **定期更新**
-   - 保持依赖库的更新
-   - 定期审查安全配置
 
 ## 故障排除
 
