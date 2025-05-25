@@ -12,7 +12,8 @@ from models import SyncStatus, Category, Article, Tag
 from services import article_service
 
 logger = logging.getLogger(__name__)
-
+if os.getenv("DEBUG_MODE") == "false":
+    logger.setLevel(logging.WARNING)
 # 从环境变量获取黑名单配置
 # 格式：逗号分隔的目录名或文件名，支持通配符
 BLACKLIST_DIRS = os.getenv("BLACKLIST_DIRS", "").split(",")

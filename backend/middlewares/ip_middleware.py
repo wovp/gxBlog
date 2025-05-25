@@ -4,9 +4,10 @@ from fastapi.responses import JSONResponse
 import logging
 import redis.asyncio as redis
 from typing import List, Optional
-
+import os
 logger = logging.getLogger(__name__)
-
+if os.getenv("DEBUG_MODE") == "false":
+    logger.setLevel(logging.WARNING)
 class IPMiddleware(BaseHTTPMiddleware):
     """
     IP白名单和黑名单中间件

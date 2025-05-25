@@ -7,8 +7,11 @@ from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 import redis.asyncio as redis
 import logging
-
+import os
 logger = logging.getLogger(__name__)
+if os.getenv("DEBUG_MODE") == "false":
+    logger.setLevel(logging.WARNING)
+
 
 class RateLimiter(BaseHTTPMiddleware):
     """
@@ -36,7 +39,7 @@ class RateLimiter(BaseHTTPMiddleware):
         self.ip_blacklist = ip_blacklist or []
         self.redis_pool = None
         self.limit_script = None
-        
+        self.custom_key_func = None
         logger.info(f"速率限制中间件已初始化，每分钟请求数: {rate_limit_per_minute}, 突发限制: {burst_limit}, "
                   f"豁免路径: {exempt_paths}, 自动黑名单阈值: {auto_blacklist_threshold}, "
                   f"自动黑名单过期时间: {auto_blacklist_expire}秒")
@@ -45,6 +48,7 @@ class RateLimiter(BaseHTTPMiddleware):
         """
         初始化Redis连接池
         """
+        logger.info(f"初始化Redis连接池")
         if self.redis_pool is None:
             try:
                 self.redis_pool = await redis.from_url(self.redis_url, encoding="utf-8", decode_responses=True, password=self.redis_password)
@@ -115,6 +119,7 @@ class RateLimiter(BaseHTTPMiddleware):
         """
         获取客户端真实IP地址
         """
+        logger.info(f"获取客户端IP: {request.client.host}")
         # 首先检查X-Forwarded-For头
         forwarded_for = request.headers.get("X-Forwarded-For")
         if forwarded_for:
@@ -130,6 +135,7 @@ class RateLimiter(BaseHTTPMiddleware):
         默认使用客户端IP作为键
         可以通过custom_key_func自定义键生成逻辑
         """
+        logger.info(f"生成速率限制键: {request.url.path}")
         if self.custom_key_func:
             return self.custom_key_func(request)
         
@@ -141,9 +147,13 @@ class RateLimiter(BaseHTTPMiddleware):
         """
         检查路径是否豁免速率限制
         """
+        logger.info(f"检查路径是否豁免速率限制: {path}")
+        logger.info(f"全部豁免路径: {self.exempt_paths}")
         for exempt_path in self.exempt_paths:
             if path.startswith(exempt_path):
+                logger.info(f"路径 {path} 有豁免速率限制")
                 return True
+        logger.info(f"路径 {path} 无豁免速率限制")
         return False
         
     async def increment_rate_limit_counter(self, client_ip: str) -> int:
@@ -230,7 +240,7 @@ class RateLimiter(BaseHTTPMiddleware):
             logger.info(f"检查IP是否在Redis黑名单中: {blacklist_key}")
             
             exists = await self.redis_pool.exists(blacklist_key)
-            logger.info(f"IP {client_ip} 在Redis黑名单中: {exists}")
+            logger.info(f"IP {client_ip} 在Redis黑名单中的状态是: {exists}")
             return exists
         except Exception as e:
             logger.error(f"检查IP {client_ip} 是否在黑名单中失败: {str(e)}")
@@ -238,6 +248,7 @@ class RateLimiter(BaseHTTPMiddleware):
             return client_ip in self.ip_blacklist
 
     async def dispatch(self, request: Request, call_next) -> Response:
+        logger.info(f"限流入口处理请求: {request.url.path}")
         # 初始化Redis连接池（如果尚未初始化）
         if self.redis_pool is None:
             await self.init_redis_pool()

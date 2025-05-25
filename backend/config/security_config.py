@@ -2,7 +2,8 @@
 import os
 from typing import List, Dict, Any
 from dotenv import load_dotenv
-
+if os.getenv("DEBUG_MODE") == "false":
+    logger.setLevel(logging.WARNING)
 # 加载环境变量
 load_dotenv()
 
@@ -33,7 +34,6 @@ IP_BLACKLIST = os.getenv("IP_BLACKLIST", "").split(",") if os.getenv("IP_BLACKLI
 
 # 豁免速率限制的路径
 EXEMPT_PATHS = [
-    "/",  # 健康检查端点
     "/docs",  # Swagger文档
     "/redoc",  # ReDoc文档
     "/openapi.json",  # OpenAPI规范

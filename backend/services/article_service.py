@@ -5,9 +5,10 @@ import logging
 from datetime import datetime
 
 from models import Article, Category, Tag, Comment
-
+import os
 logger = logging.getLogger(__name__)
-
+if os.getenv("DEBUG_MODE") == "false":
+    logger.setLevel(logging.WARNING)
 def get_categories(db: Session) -> List[Dict]:
     """
     获取所有分类
