@@ -20,3 +20,6 @@ pygments>=2.15.0  # 用于代码高亮
 # 工具库
 python-multipart>=0.0.6  # 用于处理表单数据
 email-validator>=2.0.0  # 用于验证邮箱
+
+# 安全相关
+redis>=4.5.4  # 用于速率限制

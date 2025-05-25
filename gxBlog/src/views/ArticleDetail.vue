@@ -208,13 +208,67 @@ const htmlContent = computed(() => {
 const fetchArticleDetail = async () => {
   loading.value = true
   try {
-    // 调用API获取文章详情
-    debugLog('获取文章详情，ID:', articleId)
+    // 构建缓存键
+    const cacheKey = `blog_article_detail_${articleId}`
+    const cacheTimeKey = `${cacheKey}_time`
+
+    // 尝试从本地存储获取文章详情数据
+    const cachedData = localStorage.getItem(cacheKey)
+    const cachedTime = localStorage.getItem(cacheTimeKey)
+    const currentTime = new Date().getTime()
+
+    // 检查缓存是否存在且未过期（7天有效期，因为博客内容更新频率低）
+    if (cachedData && cachedTime && (currentTime - parseInt(cachedTime)) < 7 * 24 * 60 * 60 * 1000) {
+      const articleData = JSON.parse(cachedData)
+      debugLog('从缓存获取文章详情成功，ID:', articleId)
+
+      // 处理Markdown内容中的Obsidian图片引用
+      let processedMarkdown = articleData.markdownContent || ''
+      // 替换Obsidian风格的图片引用 ![[image.png]] 为标准Markdown图片语法 ![alt](src)
+      processedMarkdown = processedMarkdown.replace(/!\[\[(.*?)\]\]/g, '![$1](/images/$1)')
+
+      // 保存处理后的Markdown原始内容
+      markdownContent.value = processedMarkdown
+
+      // 设置文章数据
+      article.value = {
+        id: Number(articleData.articleId),
+        title: articleData.title,
+        content: '', // 这里不再直接使用content字段，而是使用computed的htmlContent
+        author: articleData.author,
+        createTime: articleData.createTime,
+        tags: articleData.category ? [articleData.category.name] : [],
+        viewCount: articleData.viewCount || 0,
+        commentCount: articleData.commentCount || 0,
+        coverImage: articleData.coverImage || getRandomCoverImage(),
+        comments: articleData.comments || []
+      }
+
+      // 如果API没有返回评论数据，则使用模拟评论
+      if (!article.value.comments || article.value.comments.length === 0) {
+        article.value.comments = Array.from({ length: 5 + Number(articleId) % 5 }, (_, index) => ({
+          id: index + 1,
+          content: `这是对文章 ${articleId} 的评论 ${index + 1}。非常喜欢这篇文章，内容详实，观点独到，给我带来了很多启发。`,
+          author: ['读者A', '技术爱好者', '前端开发者', '学习者', '路人甲'][index % 5],
+          createTime: new Date(Date.now() - Math.floor(Math.random() * 10000000000)).toISOString()
+        }))
+      }
+
+      loading.value = false
+      return
+    }
+
+    // 缓存不存在或已过期，从服务器获取
+    debugLog('从服务器获取文章详情，ID:', articleId)
     const response = await articleApi.getArticleDetail(String(articleId))
 
     if (response.data.code === 200) {
       const articleData = response.data.data
       debugLog('文章详情数据:', articleData)
+
+      // 将数据存入本地存储
+      localStorage.setItem(cacheKey, JSON.stringify(articleData))
+      localStorage.setItem(cacheTimeKey, currentTime.toString())
 
       // 处理Markdown内容中的Obsidian图片引用
       let processedMarkdown = articleData.markdownContent || ''

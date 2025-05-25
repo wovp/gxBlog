@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed, onUnmounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import articleApi from '../api/articleApi'
 import type { ArticleListItem, Pagination } from '../types/article'
 import { debugLog, debugError } from '../utils/debug'
@@ -10,7 +10,7 @@ import CategoryButtons from '../components/CategoryButtons.vue'
 import {
   NCard,
   NButton,
-  NSpace,
+
   NSpin,
   NEmpty,
   NPagination,
@@ -20,14 +20,14 @@ import {
   NIcon,
   NLayout,
   NLayoutContent,
-  NBackTop
+  NBackTop,
 } from 'naive-ui'
 // 导入图标
 import { ArrowUpOutline } from '@vicons/ionicons5'
 
 import Text3d from '../components/ui/Text3d.vue'
 import LetterPullup from '../components/ui/LetterPullup.vue'
-import SnowfallBg from '../components/ui/SnowfallBg.vue'
+// 移除未使用的导入
 
 // 状态变量
 const articles = ref<ArticleListItem[]>([])
@@ -44,13 +44,38 @@ const selectedCategory = ref<string>('')
 // 获取文章分类
 const fetchCategories = async () => {
   try {
+    // 尝试从本地存储获取分类数据
+    const cachedData = localStorage.getItem('blog_categories')
+    const cachedTime = localStorage.getItem('blog_categories_time')
+    const currentTime = new Date().getTime()
+
+    // 检查缓存是否存在且未过期（7天有效期，因为分类很少变化）
+    if (cachedData && cachedTime && (currentTime - parseInt(cachedTime)) < 7 * 24 * 60 * 60 * 1000) {
+      categories.value = JSON.parse(cachedData)
+      debugLog('从缓存获取文章分类成功:', categories)
+      return
+    }
+
+    // 缓存不存在或已过期，从服务器获取
     const response = await articleApi.getCategories()
     if (response.status === 200) {
       categories.value = response.data || []
-      debugLog('获取文章分类成功:', categories)
+
+      // 将数据存入本地存储
+      localStorage.setItem('blog_categories', JSON.stringify(response.data))
+      localStorage.setItem('blog_categories_time', currentTime.toString())
+
+      debugLog('从服务器获取文章分类成功:', categories)
     }
   } catch (error) {
-    debugError('获取文章分类失败:', error)
+    // 如果请求失败但有缓存数据，使用缓存数据
+    const cachedData = localStorage.getItem('blog_categories')
+    if (cachedData) {
+      categories.value = JSON.parse(cachedData)
+      debugLog('请求失败，使用缓存的文章分类数据')
+    } else {
+      debugError('获取文章分类失败:', error)
+    }
   }
 }
 
@@ -72,14 +97,54 @@ const fetchArticles = async (page = 1) => {
       params.categoryId = selectedCategory.value
     }
 
+    // 构建缓存键，包含分页和分类信息
+    const cacheKey = `blog_articles_${params.currentPage}_${params.pageSize}_${params.categoryId || 'all'}_${params.sortBy}`
+    const cacheTimeKey = `${cacheKey}_time`
+
+    // 尝试从本地存储获取文章数据
+    const cachedData = localStorage.getItem(cacheKey)
+    const cachedTime = localStorage.getItem(cacheTimeKey)
+    const currentTime = new Date().getTime()
+
+    // 检查缓存是否存在且未过期（1天有效期，因为博客内容更新频率低）
+    if (cachedData && cachedTime && (currentTime - parseInt(cachedTime)) < 24 * 60 * 60 * 1000) {
+      const parsedData = JSON.parse(cachedData)
+      articles.value = parsedData.list
+      pagination.value = parsedData.pagination
+      debugLog('从缓存获取文章列表成功')
+      loading.value = false
+      return
+    }
+
+    // 缓存不存在或已过期，从服务器获取
     const response = await articleApi.getArticleList(params)
 
     if (response.data.code === 200) {
       articles.value = response.data.data.list
       pagination.value = response.data.data.pagination
+
+      // 将数据存入本地存储
+      localStorage.setItem(cacheKey, JSON.stringify({
+        list: response.data.data.list,
+        pagination: response.data.data.pagination
+      }))
+      localStorage.setItem(cacheTimeKey, currentTime.toString())
+
+      debugLog('从服务器获取文章列表成功')
     }
   } catch (error) {
-    debugError('获取文章列表失败:', error)
+    // 如果请求失败但有缓存数据，尝试使用缓存
+    const cacheKey = `blog_articles_${page}_10_${selectedCategory.value || 'all'}_createTime_desc`
+    const cachedData = localStorage.getItem(cacheKey)
+
+    if (cachedData) {
+      const parsedData = JSON.parse(cachedData)
+      articles.value = parsedData.list
+      pagination.value = parsedData.pagination
+      debugLog('请求失败，使用缓存的文章列表数据')
+    } else {
+      debugError('获取文章列表失败:', error)
+    }
   } finally {
     loading.value = false
   }
@@ -121,14 +186,6 @@ onMounted(() => {
 
 <template>
   <n-layout class="article-list-container min-h-screen relative">
-    <template #background>
-      <!-- 雪花背景效果,实际上没有生效 -->
-      <SnowfallBg class="absolute inset-0 z-0 w-full h-full" color="#D0E8FF" :quantity="200" :speed="0.6"
-        :min-radius="0.3" :max-radius="2" pointer-events-none>
-      </SnowfallBg>
-
-    </template>
-
     <n-layout-content class="relative z-10">
       <!-- 页面标题区域 -->
       <n-page-header class="page-header">
@@ -342,6 +399,17 @@ onMounted(() => {
 
 .article-grid-item:nth-child(3n+3) {
   animation-delay: 0.3s;
+}
+
+/* 搜索和分类区域 */
+.search-and-filter {
+  margin: 1rem 0;
+  padding: 0 1rem;
+}
+
+.search-and-filter .n-input-group {
+  margin-bottom: 1rem;
+  max-width: 600px;
 }
 
 /* 分页容器 */

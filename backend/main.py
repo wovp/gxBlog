@@ -10,6 +10,10 @@ from datetime import datetime
 from dotenv import load_dotenv
 from pydantic import BaseModel
 
+# 导入安全中间件
+from middlewares import IPMiddleware, RateLimiter
+from config.security_config import SECURITY_CONFIG
+
 # 加载环境变量
 load_dotenv()
 
@@ -42,6 +46,27 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+)
+
+# 添加IP白名单和黑名单中间件
+app.add_middleware(
+    IPMiddleware,
+    whitelist=SECURITY_CONFIG["ip_filter"]["whitelist"],
+    blacklist=SECURITY_CONFIG["ip_filter"]["blacklist"],
+    redis_url=SECURITY_CONFIG["redis_url"],
+    check_auto_blacklist=True
+)
+
+# 添加速率限制中间件
+app.add_middleware(
+    RateLimiter,
+    redis_url=SECURITY_CONFIG["redis_url"],
+    rate_limit_per_minute=SECURITY_CONFIG["rate_limit"]["per_minute"],
+    burst_limit=SECURITY_CONFIG["rate_limit"]["burst"],
+    exempt_paths=SECURITY_CONFIG["rate_limit"]["exempt_paths"],
+    auto_blacklist_threshold=SECURITY_CONFIG["ip_filter"]["auto_blacklist"]["threshold"],
+    auto_blacklist_expire=SECURITY_CONFIG["ip_filter"]["auto_blacklist"]["expire"],
+    ip_blacklist=SECURITY_CONFIG["ip_filter"]["blacklist"]
 )
 
 # 健康检查端点
@@ -131,15 +156,20 @@ class SearchArticlesRequest(BaseModel):
         # 允许额外字段，避免验证失败
         extra = "allow"
 
+# 导入安全工具
+from utils.security_utils import validate_search_keyword
+
 # 搜索文章
 @app.get("/api/article/search", response_model=schemas.ArticleListResponse)
 def search_articles(
     request: SearchArticlesRequest = Depends(),
     db: Session = Depends(get_db)
-):
+):    
+    # 验证并清理搜索关键词
+    sanitized_keyword = validate_search_keyword(request.keyword)
     articles, total, total_pages = article_service.search_articles(
         db=db,
-        keyword=request.keyword,
+        keyword=sanitized_keyword,  # 使用清理后的关键词
         page_size=request.pageSize,
         current_page=request.currentPage
     )
