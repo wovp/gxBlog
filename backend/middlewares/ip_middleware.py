@@ -17,11 +17,13 @@ class IPMiddleware(BaseHTTPMiddleware):
                  whitelist: List[str] = None, 
                  blacklist: List[str] = None,
                  redis_url: Optional[str] = None,
+                 redis_password: Optional[str] = None,
                  check_auto_blacklist: bool = True):
         super().__init__(app)
         self.whitelist = whitelist or []
         self.blacklist = blacklist or []
         self.redis_url = redis_url
+        self.redis_password = redis_password
         self.check_auto_blacklist = check_auto_blacklist
         self.redis_pool = None
         logger.info(f"IP中间件已初始化，白名单: {self.whitelist}, 黑名单: {self.blacklist}, 检查自动黑名单: {check_auto_blacklist}")
@@ -31,8 +33,32 @@ class IPMiddleware(BaseHTTPMiddleware):
         初始化Redis连接池
         """
         if self.redis_url and self.redis_pool is None:
-            self.redis_pool = await redis.from_url(self.redis_url, encoding="utf-8", decode_responses=True)
-            logger.info("IP中间件Redis连接池已初始化")
+            try:
+                self.redis_pool = await redis.from_url(self.redis_url, encoding="utf-8", decode_responses=True, password=self.redis_password)
+                logger.info("IP中间件Redis连接池已初始化")
+                # 测试连接
+                await self.redis_pool.ping()
+                logger.info("Redis连接测试成功")
+            except Exception as e:
+                logger.error(f"Redis连接初始化失败: {str(e)}")
+                # 重新尝试不使用URL中的密码，而是单独提供密码参数
+                try:
+                    # 从URL中移除可能的密码部分
+                    clean_url = self.redis_url
+                    if '@' in clean_url:
+                        # 移除URL中可能存在的密码部分
+                        protocol_part, rest = clean_url.split('://', 1)
+                        if '@' in rest:
+                            auth_part, host_part = rest.split('@', 1)
+                            clean_url = f"{protocol_part}://{host_part}"
+                    
+                    logger.info(f"尝试使用清理后的URL连接Redis: {clean_url}")
+                    self.redis_pool = await redis.from_url(clean_url, encoding="utf-8", decode_responses=True, password=self.redis_password)
+                    logger.info("Redis连接池已初始化（使用单独的密码参数）")
+                except Exception as e2:
+                    logger.error(f"Redis连接初始化第二次尝试失败: {str(e2)}")
+                    # 设置为None以便下次请求重试
+                    self.redis_pool = None
 
     async def is_in_auto_blacklist(self, ip: str) -> bool:
         """

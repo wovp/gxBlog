@@ -1,3 +1,4 @@
+from ctypes import Array
 import time
 from typing import Optional, Callable, Dict, Any
 
@@ -17,14 +18,16 @@ class RateLimiter(BaseHTTPMiddleware):
     def __init__(self, 
                  app, 
                  redis_url: str, 
+                 redis_password: str,
                  rate_limit_per_minute: int = 60, 
                  burst_limit: int = 100, 
                  exempt_paths: list = None,
                  auto_blacklist_threshold: int = 5,
                  auto_blacklist_expire: int = 3600,
-                 ip_blacklist: List[str] = None):
+                 ip_blacklist: Array[str] = None):
         super().__init__(app)
         self.redis_url = redis_url
+        self.redis_password = redis_password
         self.rate_limit_per_minute = rate_limit_per_minute
         self.burst_limit = burst_limit
         self.exempt_paths = exempt_paths or []
@@ -43,10 +46,36 @@ class RateLimiter(BaseHTTPMiddleware):
         初始化Redis连接池
         """
         if self.redis_pool is None:
-            self.redis_pool = await redis.from_url(self.redis_url, encoding="utf-8", decode_responses=True)
-            # 加载Lua脚本
-            self.limit_script = await self.redis_pool.script_load(self.LIMIT_SCRIPT)
-            logger.info("Redis连接池已初始化")
+            try:
+                self.redis_pool = await redis.from_url(self.redis_url, encoding="utf-8", decode_responses=True, password=self.redis_password)
+                # 加载Lua脚本
+                self.limit_script = await self.redis_pool.script_load(self.LIMIT_SCRIPT)
+                logger.info("Redis连接池已初始化")
+                # 测试连接
+                await self.redis_pool.ping()
+                logger.info("Redis连接测试成功")
+            except Exception as e:
+                logger.error(f"Redis连接初始化失败: {str(e)}")
+                # 重新尝试不使用URL中的密码，而是单独提供密码参数
+                try:
+                    # 从URL中移除可能的密码部分
+                    clean_url = self.redis_url
+                    if '@' in clean_url:
+                        # 移除URL中可能存在的密码部分
+                        protocol_part, rest = clean_url.split('://', 1)
+                        if '@' in rest:
+                            auth_part, host_part = rest.split('@', 1)
+                            clean_url = f"{protocol_part}://{host_part}"
+                    
+                    logger.info(f"尝试使用清理后的URL连接Redis: {clean_url}")
+                    self.redis_pool = await redis.from_url(clean_url, encoding="utf-8", decode_responses=True, password=self.redis_password)
+                    # 加载Lua脚本
+                    self.limit_script = await self.redis_pool.script_load(self.LIMIT_SCRIPT)
+                    logger.info("Redis连接池已初始化（使用单独的密码参数）")
+                except Exception as e2:
+                    logger.error(f"Redis连接初始化第二次尝试失败: {str(e2)}")
+                    # 设置为None以便下次请求重试
+                    self.redis_pool = None
 
     # 令牌桶算法的Lua脚本实现
     LIMIT_SCRIPT = """
@@ -123,46 +152,90 @@ class RateLimiter(BaseHTTPMiddleware):
         如果计数超过阈值，将IP加入黑名单
         """
         if self.redis_pool is None:
+            logger.info(f"初始化Redis连接池用于增加限流计数: {client_ip}")
             await self.init_redis_pool()
             
         counter_key = f"rate_limit_counter:{client_ip}"
+        logger.info(f"增加IP限流计数: {counter_key}")
         
-        # 增加计数并设置过期时间
-        count = await self.redis_pool.incr(counter_key)
-        if count == 1:  # 如果是第一次计数，设置过期时间
-            await self.redis_pool.expire(counter_key, self.auto_blacklist_expire)
+        try:
+            # 增加计数并设置过期时间
+            count = await self.redis_pool.incr(counter_key)
+            logger.info(f"IP {client_ip} 当前限流计数: {count}/{self.auto_blacklist_threshold}")
             
-        # 检查是否超过阈值
-        if count >= self.auto_blacklist_threshold:
-            await self.add_to_blacklist(client_ip)
-            
-        return count
+            if count == 1:  # 如果是第一次计数，设置过期时间
+                await self.redis_pool.expire(counter_key, self.auto_blacklist_expire)
+                logger.info(f"设置计数器过期时间: {self.auto_blacklist_expire}秒")
+                
+            # 检查是否超过阈值
+            if count >= self.auto_blacklist_threshold:
+                logger.warning(f"IP {client_ip} 限流计数达到阈值 {count}/{self.auto_blacklist_threshold}，准备加入黑名单")
+                await self.add_to_blacklist(client_ip)
+                
+            return count
+        except Exception as e:
+            logger.error(f"增加限流计数失败: {str(e)}")
+            return 0
         
     async def add_to_blacklist(self, client_ip: str) -> None:
         """
         将IP加入黑名单
         """
-        # 检查IP是否已在黑名单中
-        if client_ip in self.ip_blacklist:
-            return
+        try:
+            # 检查IP是否已在黑名单中
+            if client_ip in self.ip_blacklist:
+                logger.info(f"IP {client_ip} 已在内存黑名单中，无需重复添加")
+                return
+                
+            # 将IP加入黑名单
+            self.ip_blacklist.append(client_ip)
+            logger.warning(f"IP {client_ip} 已被自动加入内存黑名单，触发限流次数过多")
             
-        # 将IP加入黑名单
-        self.ip_blacklist.append(client_ip)
-        logger.warning(f"IP {client_ip} 已被自动加入黑名单，触发限流次数过多")
-        
-        # 在Redis中记录黑名单状态和过期时间
-        blacklist_key = f"ip_blacklist:{client_ip}"
-        await self.redis_pool.set(blacklist_key, "1", ex=self.auto_blacklist_expire)
+            # 在Redis中记录黑名单状态和过期时间
+            blacklist_key = f"ip_blacklist:{client_ip}"
+            logger.info(f"将IP添加到Redis黑名单: {blacklist_key}, 过期时间: {self.auto_blacklist_expire}秒")
+            
+            # 确保Redis连接池已初始化
+            if self.redis_pool is None:
+                logger.info("初始化Redis连接池用于添加黑名单")
+                await self.init_redis_pool()
+                
+            # 设置黑名单键值和过期时间
+            result = await self.redis_pool.set(blacklist_key, "1", ex=self.auto_blacklist_expire)
+            logger.info(f"Redis黑名单设置结果: {result}")
+            
+            # 验证黑名单设置是否成功
+            exists = await self.redis_pool.exists(blacklist_key)
+            logger.info(f"验证Redis黑名单键是否存在: {exists}")
+        except Exception as e:
+            logger.error(f"将IP {client_ip} 加入黑名单失败: {str(e)}")
+            # 即使Redis操作失败，也保留内存中的黑名单记录
         
     async def is_in_auto_blacklist(self, client_ip: str) -> bool:
         """
         检查IP是否在自动黑名单中
         """
-        if self.redis_pool is None:
-            await self.init_redis_pool()
+        try:
+            # 首先检查内存中的黑名单
+            if client_ip in self.ip_blacklist:
+                logger.info(f"IP {client_ip} 在内存黑名单中")
+                return True
+                
+            # 然后检查Redis中的黑名单
+            if self.redis_pool is None:
+                logger.info(f"初始化Redis连接池用于检查黑名单: {client_ip}")
+                await self.init_redis_pool()
+                
+            blacklist_key = f"ip_blacklist:{client_ip}"
+            logger.info(f"检查IP是否在Redis黑名单中: {blacklist_key}")
             
-        blacklist_key = f"ip_blacklist:{client_ip}"
-        return await self.redis_pool.exists(blacklist_key)
+            exists = await self.redis_pool.exists(blacklist_key)
+            logger.info(f"IP {client_ip} 在Redis黑名单中: {exists}")
+            return exists
+        except Exception as e:
+            logger.error(f"检查IP {client_ip} 是否在黑名单中失败: {str(e)}")
+            # 如果Redis检查失败，回退到内存黑名单检查
+            return client_ip in self.ip_blacklist
 
     async def dispatch(self, request: Request, call_next) -> Response:
         # 初始化Redis连接池（如果尚未初始化）
@@ -192,6 +265,7 @@ class RateLimiter(BaseHTTPMiddleware):
         requested = 1  # 每个请求消耗1个令牌
         
         try:
+            logger.info(f"执行速率限制检查: {rate_limit_key}, 脚本ID: {self.limit_script}")
             result = await self.redis_pool.evalsha(
                 self.limit_script,
                 1,  # 键的数量
@@ -202,6 +276,7 @@ class RateLimiter(BaseHTTPMiddleware):
                 requested  # ARGV[4] - 请求的令牌数
             )
             
+            logger.info(f"速率限制检查结果: {result}")
             allowed, remaining = result
             
             # 设置速率限制的响应头

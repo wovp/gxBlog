@@ -54,6 +54,7 @@ app.add_middleware(
     whitelist=SECURITY_CONFIG["ip_filter"]["whitelist"],
     blacklist=SECURITY_CONFIG["ip_filter"]["blacklist"],
     redis_url=SECURITY_CONFIG["redis_url"],
+    redis_password=SECURITY_CONFIG["redis_password"],
     check_auto_blacklist=True
 )
 
@@ -61,6 +62,7 @@ app.add_middleware(
 app.add_middleware(
     RateLimiter,
     redis_url=SECURITY_CONFIG["redis_url"],
+    redis_password=SECURITY_CONFIG["redis_password"],
     rate_limit_per_minute=SECURITY_CONFIG["rate_limit"]["per_minute"],
     burst_limit=SECURITY_CONFIG["rate_limit"]["burst"],
     exempt_paths=SECURITY_CONFIG["rate_limit"]["exempt_paths"],

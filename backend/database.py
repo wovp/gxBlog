@@ -27,7 +27,7 @@ else:
 # 创建SQLAlchemy引擎
 engine = create_engine(
     DATABASE_URL,
-    echo=True,  # 设置为True以查看SQL语句，生产环境应设为False
+    echo=False,  # 设置为False以禁止打印SQL语句
     pool_pre_ping=True  # 自动检测连接是否有效
 )
 

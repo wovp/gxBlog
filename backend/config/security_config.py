@@ -7,7 +7,16 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Redis配置
+# 确保Redis URL不包含密码，密码通过单独的参数传递
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+# 如果URL中包含密码，则清理URL
+if '@' in REDIS_URL:
+    # 移除URL中可能存在的密码部分
+    protocol_part, rest = REDIS_URL.split('://', 1)
+    if '@' in rest:
+        auth_part, host_part = rest.split('@', 1)
+        REDIS_URL = f"{protocol_part}://{host_part}"
+
 REDIS_PASSWORD = os.getenv("REDIS_PASSWORD", None)
 # 速率限制配置
 RATE_LIMIT_PER_MINUTE = int(os.getenv("RATE_LIMIT_PER_MINUTE", "60"))  # 默认每分钟60个请求
