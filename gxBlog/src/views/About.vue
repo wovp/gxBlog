@@ -1,10 +1,96 @@
 <script setup lang="ts">
 import type { NumberAnimationInst } from 'naive-ui'
 import { onMounted, onUnmounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import '../assets/styles/about.css'
 
 // 创建 Intersection Observer 来处理淡入动画
 let observer: IntersectionObserver
+
+// 隐藏兴趣爱好的点击计数和显示状态
+const gameConcealCnt = ref(0)
+const showGameHobby = ref(false)
+let gameTimer: number | null = null
+
+// 长按相关变量
+let pressTimer: number | null = null
+const pressStartTime = ref(0)
+const isPressing = ref(false)
+const pressProgress = ref(0)
+const router = useRouter()
+
+// 处理兴趣爱好点击事件
+const handleHobbyClick = () => {
+  // 如果已经显示了游戏兴趣爱好，不再增加计数
+  if (showGameHobby.value) return
+
+  // 增加点击计数
+  gameConcealCnt.value++
+
+  // 当点击次数达到5次时，设置5秒计时器
+  if (gameConcealCnt.value === 5) {
+    // 清除之前的计时器（如果有）
+    if (gameTimer !== null) {
+      clearTimeout(gameTimer)
+    }
+
+    // 设置新的5秒计时器
+    gameTimer = setTimeout(() => {
+      // 5秒后再次检查点击次数是否仍为5
+      if (gameConcealCnt.value === 5) {
+        showGameHobby.value = true
+      }
+      gameTimer = null
+    }, 5000)
+  }
+
+  // 如果点击次数超过5次，重置计数并清除计时器
+  if (gameConcealCnt.value > 5) {
+    gameConcealCnt.value = 0
+    if (gameTimer !== null) {
+      clearTimeout(gameTimer)
+      gameTimer = null
+    }
+  }
+}
+
+// 处理长按开始事件
+const handlePressStart = () => {
+  // 只有在游戏兴趣爱好显示后才能长按跳转
+  if (!showGameHobby.value) return
+
+  isPressing.value = true
+  pressStartTime.value = Date.now()
+
+  // 创建长按计时器
+  pressTimer = setInterval(() => {
+    const elapsedTime = Date.now() - pressStartTime.value
+    // 计算进度百分比（0-100）
+    pressProgress.value = Math.min(100, (elapsedTime / 3000) * 100)
+
+    // 如果长按超过3秒，跳转到贪吃蛇游戏页面
+    if (elapsedTime >= 3000) {
+      handlePressEnd(true)
+      router.push('/snake')
+    }
+  }, 100) // 每100毫秒更新一次进度
+}
+
+// 处理长按结束事件
+const handlePressEnd = (completed = false) => {
+  isPressing.value = false
+
+  // 如果不是因为完成而结束，重置进度
+  if (!completed) {
+    pressProgress.value = 0
+  }
+
+  // 清除长按计时器
+  if (pressTimer !== null) {
+    clearInterval(pressTimer)
+    pressTimer = null
+  }
+}
 
 // 定义个人兴趣爱好
 const hobbies = [
@@ -14,6 +100,9 @@ const hobbies = [
   { name: '音乐', icon: '🎵' },
   { name: '编程', icon: '💻' }
 ]
+
+// 隐藏的游戏兴趣爱好
+const gameHobby = { name: '游戏', icon: '🎮' }
 
 // 计算年龄的逻辑
 const birthYear = 2003 // 这里替换为你的出生年份
@@ -68,6 +157,18 @@ onUnmounted(() => {
   if (ageInterval !== null) {
     clearInterval(ageInterval)
     ageInterval = null
+  }
+
+  // 清除游戏兴趣爱好计时器
+  if (gameTimer !== null) {
+    clearTimeout(gameTimer)
+    gameTimer = null
+  }
+
+  // 清除长按计时器
+  if (pressTimer !== null) {
+    clearInterval(pressTimer)
+    pressTimer = null
   }
 })
 </script>
@@ -132,14 +233,31 @@ onUnmounted(() => {
 
       <!-- 兴趣爱好 -->
       <n-card title="✨ 兴趣爱好 ✨" class="about-section fade-in-section" hoverable>
-        <n-grid :cols="5" :x-gap="12">
+        <n-grid :cols="showGameHobby ? 6 : 5" :x-gap="12">
           <n-grid-item v-for="hobby in hobbies" :key="hobby.name">
-            <n-card class="hobby-card" hoverable>
+            <n-card class="hobby-card" hoverable @click="handleHobbyClick">
               <div class="hobby-icon">{{ hobby.icon }}</div>
               <n-text class="hobby-name">{{ hobby.name }}</n-text>
             </n-card>
           </n-grid-item>
+          <!-- 隐藏的游戏兴趣爱好，只有在点击5次并等待5秒后才显示 -->
+          <n-grid-item v-if="showGameHobby">
+            <n-card class="hobby-card game-hobby" :class="{ 'pressing': isPressing }" hoverable
+              @mousedown="handlePressStart" @mouseup="handlePressEnd" @mouseleave="handlePressEnd"
+              @touchstart="handlePressStart" @touchend="handlePressEnd" @touchcancel="handlePressEnd">
+              <div class="hobby-icon">{{ gameHobby.icon }}</div>
+              <n-text class="hobby-name">{{ gameHobby.name }}</n-text>
+              <!-- 长按进度条 -->
+              <div class="press-progress-container">
+                <div class="press-progress-bar" :style="{ width: `${pressProgress}%` }"></div>
+              </div>
+            </n-card>
+          </n-grid-item>
         </n-grid>
+        <!-- 调试信息，可以在开发时使用，发布时删除 -->
+        <!-- <div v-if="import.meta.env.DEV" style="margin-top: 10px; font-size: 12px; color: #999;">
+          点击次数: {{ gameConcealCnt }}
+        </div> -->
       </n-card>
     </n-layout-content>
   </n-layout>

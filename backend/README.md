@@ -16,54 +16,13 @@
 - Python 3.8+
 - MySQL 5.7+
 
-## 安装步骤
 
-1. 克隆项目
-
-```bash
-git clone <项目地址>
-cd backend
-```
-
-2. 创建虚拟环境并安装依赖
-
-```bash
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-pip install -r requirements.txt
-```
-
-3. 配置环境变量
-
-复制`.env.example`文件为`.env`，并根据实际情况修改配置：
-
-```bash
-cp .env.example .env
-# 编辑.env文件，设置数据库连接信息和GitHub仓库信息
-```
-
-主要配置项：
+## **主要配置项：**
 - 数据库连接信息（DB_USER, DB_PASSWORD等）
 - GitHub仓库URL（GITHUB_REPO_URL）
 - 本地目标目录（GITHUB_TARGET_DIR）
 - 同步时间间隔（SYNC_INTERVAL，使用cron表达式）
 - 网络代理设置：HTTP_PROXY, HTTPS_PROXY（如果需要通过代理访问GitHub）
-
-4. 初始化数据库
-
-确保MySQL服务已启动，并创建了对应的数据库：
-
-```sql
-CREATE DATABASE gxblog CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-```
-
-5. 启动服务
-
-```bash
-uvicorn main:app --reload
-```
-
-服务将在 http://localhost:8000 运行，API文档可访问 http://localhost:8000/docs
 
 ## API接口
 

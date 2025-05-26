@@ -28,6 +28,11 @@ const routes = [
     path: '/about',
     name: 'About',
     component: () => import('../views/About.vue')
+  },
+  {
+    path: '/snake',
+    name: 'Snake',
+    component: () => import('../views/Snake.vue')
   }
   // 移除重复的ArticleListDemo路由
 ]
