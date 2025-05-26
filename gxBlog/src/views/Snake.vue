@@ -114,129 +114,7 @@ import { ref, onMounted, onUnmounted } from 'vue';
 import { NButton, NModal, NIcon } from 'naive-ui';
 import { ArrowUpOutline, ArrowDownOutline, ArrowBackOutline, ArrowForwardOutline } from '@vicons/ionicons5';
 import { debugLog } from '../utils/debug';
-
-// 定义坐标接口
-interface Position {
-  x: number;
-  y: number;
-}
-
-// 方向枚举
-enum Direction {
-  UP = 'UP',
-  DOWN = 'DOWN',
-  LEFT = 'LEFT',
-  RIGHT = 'RIGHT',
-}
-
-// 蛇类
-class Snake {
-  body: Position[];
-  direction: Direction;
-  nextDirection: Direction;
-
-  constructor() {
-    // 初始化蛇的身体，从中间开始，长度为3
-    this.body = [
-      { x: 10, y: 10 },
-      { x: 9, y: 10 },
-      { x: 8, y: 10 }
-    ];
-    this.direction = Direction.RIGHT;
-    this.nextDirection = Direction.RIGHT;
-  }
-
-  // 移动蛇
-  move(food: Position | null): boolean {
-    debugLog(`移动蛇`)
-    // 更新方向
-    this.direction = this.nextDirection;
-
-    // 获取头部位置
-    const head = { ...this.body[0] };
-
-    // 根据方向移动头部
-    switch (this.direction) {
-      case Direction.UP:
-        head.y -= 1;
-        break;
-      case Direction.DOWN:
-        head.y += 1;
-        break;
-      case Direction.LEFT:
-        head.x -= 1;
-        break;
-      case Direction.RIGHT:
-        head.x += 1;
-        break;
-    }
-
-    // 将新头部添加到身体前面
-    this.body.unshift(head);
-
-    // 检查是否吃到食物
-    let ateFood = false;
-    if (food && head.x === food.x && head.y === food.y) {
-      ateFood = true;
-    } else {
-      // 如果没有吃到食物，移除尾部
-      this.body.pop();
-    }
-
-    return ateFood;
-  }
-
-  // 改变方向
-  changeDirection(newDirection: Direction): void {
-    // 防止180度转弯
-    if (
-      (this.direction === Direction.UP && newDirection === Direction.DOWN) ||
-      (this.direction === Direction.DOWN && newDirection === Direction.UP) ||
-      (this.direction === Direction.LEFT && newDirection === Direction.RIGHT) ||
-      (this.direction === Direction.RIGHT && newDirection === Direction.LEFT)
-    ) {
-      return;
-    }
-
-    this.nextDirection = newDirection;
-  }
-
-  // 检查是否撞到自己
-  checkCollisionWithSelf(): boolean {
-    const head = this.body[0];
-    return this.body.slice(1).some(segment => segment.x === head.x && segment.y === head.y);
-  }
-}
-
-// 食物类
-class Food {
-  x: number;
-  y: number;
-  style: number;
-
-  constructor(x: number, y: number) {
-    this.x = x;
-    this.y = y;
-    this.style = Math.floor(Math.random() * 3); // 随机生成食物样式
-  }
-
-  // 生成新的食物位置
-  static generateFood(snake: Snake, gridWidth: number, gridHeight: number): Food {
-    let x: number = 0, y: number = 0;
-    let validPosition = false;
-
-    // 确保食物不会生成在蛇身上
-    while (!validPosition) {
-      x = Math.floor(Math.random() * gridWidth);
-      y = Math.floor(Math.random() * gridHeight);
-
-      validPosition = !snake.body.some(segment => segment.x === x && segment.y === y);
-    }
-
-    return new Food(x, y);
-  }
-}
-
+import { Snake, Food, Direction } from '../model/SnakeModel';
 // 游戏控制器类
 class GameController {
   snake: Snake;
@@ -248,7 +126,6 @@ class GameController {
   canvasHeight: number;
   score: number;
   level: number;
-  speed: number;
   isRunning: boolean;
   gameInterval: number | null;
   onGameOver: () => void;
@@ -263,7 +140,6 @@ class GameController {
     this.food = null;
     this.score = 0;
     this.level = 1;
-    this.speed = 200; // 初始速度，毫秒
     this.isRunning = false;
     this.gameInterval = null;
     this.onGameOver = onGameOver;
@@ -277,7 +153,7 @@ class GameController {
     if (this.isRunning) return;
 
     this.isRunning = true;
-    this.gameInterval = window.setInterval(() => this.gameLoop(), this.speed);
+    this.gameInterval = window.setInterval(() => this.gameLoop(), this.snake.speed);
   }
 
   // 暂停游戏
@@ -298,12 +174,11 @@ class GameController {
     this.generateFood();
     this.score = 0;
     this.level = 1;
-    this.speed = 200;
+    this.snake.speed = 200;
   }
 
   // 游戏主循环
   gameLoop(): void {
-    debugLog(`游戏主循环`)
     // 移动蛇并检查是否吃到食物
     const ateFood = this.snake.move(this.food);
 
@@ -349,12 +224,12 @@ class GameController {
     // 每50分升一级，提高速度
     if (this.score % 50 === 0) {
       this.level += 1;
-      this.speed = Math.max(50, this.speed - 20); // 最快速度为50ms
+      this.snake.speed = Math.max(50, this.snake.speed - 20); // 最快速度为50ms
 
       // 更新游戏速度
       if (this.gameInterval !== null) {
         clearInterval(this.gameInterval);
-        this.gameInterval = window.setInterval(() => this.gameLoop(), this.speed);
+        this.gameInterval = window.setInterval(() => this.gameLoop(), this.snake.speed);
       }
     }
   }
