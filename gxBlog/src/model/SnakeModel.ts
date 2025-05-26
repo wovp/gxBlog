@@ -19,7 +19,25 @@ export class Snake {
     body: Position[];
     direction: Direction;
     nextDirection: Direction;
-    speed: number;
+
+    // 速度属性
+    baseSpeed: number; // 基础速度
+    currentSpeed: number; // 当前速度
+
+    // 加速相关属性
+    isSpeedingUp: boolean;
+    speedUpFactor: number;
+    speedUpDuration: number;
+    speedUpCooldown: number;
+    speedUpEnergy: number;
+    maxSpeedUpEnergy: number;
+    energyRegenRate: number;
+    lastEnergyUpdate: number;
+    speedUpTimer: number | null;
+    cooldownTimer: number | null;
+
+    // 加速结束回调
+    onSpeedUpEnd: (() => void) | null;
 
     constructor() {
         // 初始化蛇的身体，从中间开始，长度为3
@@ -30,7 +48,25 @@ export class Snake {
         ];
         this.direction = Direction.RIGHT;
         this.nextDirection = Direction.RIGHT;
-        this.speed = 200; // 蛇的移动速度，单位为毫秒
+
+        // 初始化速度属性
+        this.baseSpeed = 200; // 基础速度
+        this.currentSpeed = this.baseSpeed; // 当前速度初始为基础速度秒
+
+        // 初始化加速属性
+        this.isSpeedingUp = false;
+        this.speedUpFactor = 0.5; // 加速到原速度的50%
+        this.speedUpDuration = 3000; // 加速持续3秒
+        this.speedUpCooldown = 5000; // 冷却时间5秒
+        this.speedUpEnergy = 100; // 初始能量满格
+        this.maxSpeedUpEnergy = 100;
+        this.energyRegenRate = 20; // 每秒恢复20点能量
+        this.lastEnergyUpdate = Date.now();
+        this.speedUpTimer = null;
+        this.cooldownTimer = null;
+
+        // 初始化回调
+        this.onSpeedUpEnd = null;
     }
 
     // 移动蛇
@@ -126,23 +162,128 @@ export class Snake {
     private decreaseSpeed(foodStyle: number): void {
         // 根据食物类型计算减速比例 (11-20 转换为 1.1-2.0 倍减速)
         const slowdownFactor = 1 + (foodStyle - 10) / 10;
-        const newSpeed = Math.min(1000, this.speed * slowdownFactor); // 最大减速到1000ms
+        const newSpeed = Math.min(1000, this.baseSpeed * slowdownFactor); // 最大减速到1000ms
 
         debugLog(`吃到减速食物, 类型: ${foodStyle}, 速度变为 ${newSpeed}ms`)
 
-        this.speed = newSpeed;
+        this.adjustBaseSpeed(newSpeed);
     }
 
     // 增加速度
     private increaseSpeed(foodStyle: number): void {
         // 根据食物类型计算加速比例 (21-30 转换为 0.1-0.9 倍加速)
         const speedupFactor = 1 - (foodStyle - 20) / 20;
-        const newSpeed = Math.max(50, this.speed * speedupFactor); // 最小加速到50ms
+        const newSpeed = Math.max(50, this.baseSpeed * speedupFactor); // 最小加速到50ms
 
         debugLog(`吃到加速食物, 类型: ${foodStyle}, 速度变为 ${newSpeed}ms`)
 
-        this.speed = newSpeed;
+        this.adjustBaseSpeed(newSpeed);
     }
+
+    // 主动加速
+    activateSpeedUp(): boolean {
+        // 检查是否可以加速
+        if (this.isSpeedingUp || this.speedUpEnergy < 100 || this.cooldownTimer !== null) {
+            return false;
+        }
+
+        // 开始加速
+        this.isSpeedingUp = true;
+        this.speedUpEnergy = 0; // 消耗所有能量
+
+        // 保存当前速度
+        const originalSpeed = this.currentSpeed;
+
+        // 应用加速
+        this.currentSpeed = Math.max(50, this.currentSpeed * this.speedUpFactor); // 确保最小速度为50ms
+
+        debugLog(`激活加速, 速度从 ${originalSpeed}ms 变为 ${this.currentSpeed}ms`);
+        // 设置加速结束计时器
+        this.speedUpTimer = setTimeout(() => {
+            // 结束加速
+            this.isSpeedingUp = false;
+            this.currentSpeed = originalSpeed;
+
+            debugLog(`加速结束, 恢复速度 ${this.currentSpeed}ms`);
+
+            // 调用回调通知加速结束
+            if (this.onSpeedUpEnd) {
+                this.onSpeedUpEnd();
+            }
+
+            // 设置冷却计时器
+            this.cooldownTimer = setTimeout(() => {
+                this.cooldownTimer = null;
+                debugLog(`加速冷却结束`);
+            }, this.speedUpCooldown);
+
+        }, this.speedUpDuration);
+
+        return true;
+    }
+
+    // 设置加速结束回调
+    setSpeedUpEndCallback(callback: () => void): void {
+        this.onSpeedUpEnd = callback;
+    }
+
+    // 更新加速能量
+    updateSpeedUpEnergy(): void {
+        if (!this.isSpeedingUp && this.speedUpEnergy < this.maxSpeedUpEnergy) {
+            const now = Date.now();
+            const deltaTime = (now - this.lastEnergyUpdate) / 1000; // 转换为秒
+            this.lastEnergyUpdate = now;
+
+            // 恢复能量
+            this.speedUpEnergy = Math.min(
+                this.maxSpeedUpEnergy,
+                this.speedUpEnergy + deltaTime * this.energyRegenRate
+            );
+        }
+    }
+    // 调整基础速度（用于升级）
+    adjustBaseSpeed(newBaseSpeed: number): void {
+        // 保存当前是否在加速
+        const wasSpeedingUp = this.isSpeedingUp;
+
+        // 如果不在加速，当前速度直接设置为新的基础速度
+        if (!wasSpeedingUp) {
+            this.currentSpeed = newBaseSpeed;
+        }
+
+        // 更新基础速度
+        this.baseSpeed = newBaseSpeed;
+
+        debugLog(`调整基础速度为 ${this.baseSpeed}ms, 当前速度为 ${this.currentSpeed}ms`);
+    }
+
+    // 重置蛇的状态
+    reset(): void {
+        this.body = [
+            { x: 10, y: 7 },
+            { x: 9, y: 7 },
+            { x: 8, y: 7 },
+        ];
+        this.direction = Direction.RIGHT;
+        this.nextDirection = Direction.RIGHT;
+
+        // 重置加速状态
+        this.isSpeedingUp = false;
+        this.speedUpEnergy = this.maxSpeedUpEnergy;
+        this.lastEnergyUpdate = Date.now();
+
+        // 清除计时器
+        if (this.speedUpTimer !== null) {
+            clearTimeout(this.speedUpTimer);
+            this.speedUpTimer = null;
+        }
+
+        if (this.cooldownTimer !== null) {
+            clearTimeout(this.cooldownTimer);
+            this.cooldownTimer = null;
+        }
+    }
+
 
 
     // 改变方向

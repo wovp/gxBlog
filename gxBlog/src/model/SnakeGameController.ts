@@ -18,6 +18,12 @@ export class GameController {
     level: number;
     isRunning: boolean;
     gameInterval: number | null;
+
+    // 动画优化相关属性
+    animationFrameId: number | null;
+    lastFrameTime: number | null;
+
+
     onGameOver: () => void;
 
     constructor(gridSize: number, onGameOver: () => void) {
@@ -34,12 +40,32 @@ export class GameController {
         this.gameInterval = null;
         this.onGameOver = onGameOver;
 
+        // 石头相关属性
         this.stones = [];
         this.stoneTimer = null;
         this.currentWarning = null;
         this.warningTimer = null;
 
+        // 动画优化相关属性
+        this.animationFrameId = null;
+        this.lastFrameTime = null;
+
         this.generateFood();
+        // 设置加速结束回调
+        this.snake.setSpeedUpEndCallback(() => {
+            this.onSnakeSpeedUpEnd();
+        });
+    }
+
+    // 安全地更新游戏循环
+    updateGameLoop(): void {
+        // 重置帧计时器，确保立即更新
+        this.lastFrameTime = performance.now();
+
+        // 强制触发一次游戏循环，确保页面渲染
+        this.gameLoop(performance.now());
+
+        debugLog(`更新游戏循环速度为 ${this.snake.currentSpeed}ms`);
     }
 
     // 开始游戏
@@ -48,12 +74,16 @@ export class GameController {
         if (this.isRunning) return;
 
         this.isRunning = true;
-        this.gameInterval = window.setInterval(() => this.gameLoop(), this.snake.speed);
+
+        this.lastFrameTime = performance.now();
+        // 使用requestAnimationFrame替代setInterval
+        this.gameLoop(performance.now());
 
         // 如果没有石头计时器在运行，安排新的石头事件
         if (this.stoneTimer === null) {
             this.scheduleRandomStone();
         }
+
     }
 
     // 暂停游戏
@@ -77,18 +107,26 @@ export class GameController {
             clearTimeout(this.warningTimer);
             this.warningTimer = null;
         }
+
+        // 取消动画帧
+        if (this.animationFrameId !== null) {
+            cancelAnimationFrame(this.animationFrameId);
+            this.animationFrameId = null;
+        }
+
     }
 
     // 重置游戏
     resetGame(): void {
         this.pauseGame();
         this.snake = new Snake();
-        this.generateFood();
         this.score = 0;
         this.level = 1;
-        this.snake.speed = 200;
+        this.stones = [];
+        this.currentWarning = null;
+        this.food = null;
     }
-
+    // -------------------------------------石头障碍部分------------------------------------//
     // 生成石头
     generateStone(): void {
         if (this.currentWarning === null) {
@@ -151,32 +189,50 @@ export class GameController {
 
 
     // 游戏主循环
-    gameLoop(): void {
-        // 移动蛇并检查是否吃到食物
-        const ateFood = this.snake.move(this.food);
+    gameLoop(currentTime: number): void {
 
-        // 检查是否撞墙
-        if (this.checkCollisionWithWall()) {
-            this.gameOver();
+        // 记录当前帧ID
+        this.animationFrameId = requestAnimationFrame(this.gameLoop.bind(this));
+
+        // 计算时间差
+        if (this.lastFrameTime === null) {
+            this.lastFrameTime = currentTime;
             return;
         }
 
-        // 检查是否撞到自己
-        if (this.snake.checkCollisionWithSelf()) {
-            this.gameOver();
-            return;
-        }
+        const deltaTime = currentTime - this.lastFrameTime;
+        if (deltaTime >= this.snake.currentSpeed) {
+            debugLog(`游戏主循环，deltaTime: ${deltaTime}, 当前速度: ${this.snake.currentSpeed}`);
 
-        // 检查是否撞到石头
-        if (this.checkCollisionWithStones()) {
-            this.gameOver();
-            return;
-        }
+            // 更新上一帧时间
+            this.lastFrameTime = currentTime;
 
-        // 如果吃到食物，生成新的食物并增加分数
-        if (ateFood) {
-            this.generateFood();
-            this.increaseScore();
+            // 移动蛇并检查是否吃到食物
+            const ateFood = this.snake.move(this.food);
+
+            // 检查是否撞墙
+            if (this.checkCollisionWithWall()) {
+                this.gameOver();
+                return;
+            }
+
+            // 检查是否撞到自己
+            if (this.snake.checkCollisionWithSelf()) {
+                this.gameOver();
+                return;
+            }
+
+            // 检查是否撞到石头
+            if (this.checkCollisionWithStones()) {
+                this.gameOver();
+                return;
+            }
+
+            // 如果吃到食物，生成新的食物并增加分数
+            if (ateFood) {
+                this.generateFood();
+                this.increaseScore();
+            }
         }
     }
 
@@ -209,16 +265,39 @@ export class GameController {
         // 每50分升一级，提高速度
         if (this.score % 50 === 0) {
             this.level += 1;
-            this.snake.speed = Math.max(50, this.snake.speed - 20); // 最快速度为50ms
+            // 调整蛇的基础速度
+            const newBaseSpeed = Math.max(50, this.snake.baseSpeed - 10); // 每级减少10ms，最低50ms
+            this.snake.adjustBaseSpeed(newBaseSpeed);
 
+            debugLog(`升级! 等级: ${this.level}, 蛇的基础速度: ${this.snake.baseSpeed}ms, 当前速度: ${this.snake.currentSpeed}ms`);
             // 更新游戏速度
             if (this.gameInterval !== null) {
-                clearInterval(this.gameInterval);
-                this.gameInterval = window.setInterval(() => this.gameLoop(), this.snake.speed);
+                // 安全地更新游戏循环
+                this.updateGameLoop();
             }
         }
     }
+    // 主动加速
+    activateSpeedUp(): boolean {
+        const activated = this.snake.activateSpeedUp();
+        if (activated) {
+            // 安全地更新游戏循环
+            this.updateGameLoop();
+        }
+        return activated;
+    }
 
+    // 加速结束回调
+    onSnakeSpeedUpEnd(): void {
+        debugLog(`收到蛇加速结束通知，更新游戏循环速度`);
+
+        // 更新游戏循环速度
+        if (this.isRunning) {
+            // 安全地更新游戏循环
+            this.updateGameLoop();
+
+        }
+    }
     // 游戏结束
     gameOver(): void {
         this.pauseGame();

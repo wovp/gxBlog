@@ -1,5 +1,6 @@
 <template>
   <div class="snake-game-container">
+    <!-- 游戏头部和信息区域 -->
     <div class="game-header">
       <h1 class="game-title">贪吃蛇小游戏</h1>
       <div class="game-info">
@@ -10,6 +11,27 @@
         <div class="level-container">
           <span class="level-label">等级:</span>
           <span class="level-value">{{ gameController.level }}</span>
+        </div>
+        <div class="speed-container">
+          <span class="speed-label">速度:</span>
+          <span class="speed-value">{{ gameController.snake.currentSpeed }}ms</span>
+        </div>
+      </div>
+
+      <!-- 加速能量条 -->
+      <div class="speedup-container">
+        <div class="speedup-label">加速能量</div>
+        <div class="speedup-bar">
+          <div class="speedup-fill" :style="{
+            width: `${gameController.snake.speedUpEnergy}%`,
+            backgroundColor: getSpeedUpColor()
+          }"></div>
+        </div>
+        <div class="speedup-status">
+          {{ gameController.snake.isSpeedingUp ? '加速中!' :
+            gameController.snake.cooldownTimer ? '冷却中...' :
+              gameController.snake.speedUpEnergy >= 100 ? '按K键加速' :
+                '恢复中' }}
         </div>
       </div>
     </div>
@@ -171,6 +193,14 @@ const handleKeyDown = (event: KeyboardEvent) => {
       gameController.value.snake.changeDirection(Direction.RIGHT);
       debugLog(`接受键盘参数，向右`)
       break;
+    case 'k': // 加速
+      if (gameController.value.isRunning) {
+        const activated = gameController.value.activateSpeedUp();
+        if (activated) {
+          debugLog(`用户按下K键，激活加速`);
+        }
+      }
+      break;
     // 保留方向键控制作为备选
     case 'arrowup':
       gameController.value.snake.changeDirection(Direction.UP);
@@ -231,6 +261,25 @@ const getHeadRotation = () => {
       return 180;
     case Direction.RIGHT:
       return 0;
+  }
+};
+
+// 计算加速条颜色
+const getSpeedUpColor = () => {
+  const energy = gameController.value.snake.speedUpEnergy;
+
+  if (gameController.value.snake.isSpeedingUp) {
+    return '#2ecc71'; // 绿色 - 加速中
+  } else if (gameController.value.snake.cooldownTimer) {
+    return '#e74c3c'; // 红色 - 冷却中
+  } else if (energy >= 100) {
+    return '#3498db'; // 蓝色 - 已满
+  } else {
+    // 渐变色：从黄色到蓝色
+    const r = 255 - Math.floor(energy * 2.55);
+    const g = 255 - Math.floor((100 - energy) * 1.275);
+    const b = Math.floor(energy * 2.55);
+    return `rgb(${r}, ${g}, ${b})`;
   }
 };
 
@@ -683,5 +732,40 @@ const handleResetGame = () => {
     opacity: 1;
     transform: scale(1.2);
   }
+}
+
+.speedup-container {
+  margin-top: 1rem;
+  width: 100%;
+  max-width: 300px;
+}
+
+.speedup-label {
+  font-weight: bold;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 0.3rem;
+  font-size: 0.9rem;
+}
+
+.speedup-bar {
+  width: 100%;
+  height: 15px;
+  background-color: rgba(0, 0, 0, 0.3);
+  border-radius: 7.5px;
+  overflow: hidden;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.speedup-fill {
+  height: 100%;
+  transition: width 0.1s linear;
+  box-shadow: 0 0 10px rgba(52, 152, 219, 0.7);
+}
+
+.speedup-status {
+  margin-top: 0.3rem;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.8);
+  text-align: center;
 }
 </style>
