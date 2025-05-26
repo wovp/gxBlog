@@ -34,13 +34,38 @@
         </div>
 
         <!-- 食物 -->
-        <div v-if="gameController.food" class="food" :style="{
+        <div v-if="gameController.food" class="food" :class="{
+          'food-grow': gameController.food.type === 'grow',
+          'food-shrink': gameController.food.type === 'shrink',
+          'food-slow': gameController.food.type === 'slow',
+          'food-fast': gameController.food.type === 'fast'
+        }" :style="{
           left: `${gameController.food.x * gameController.gridSize}px`,
           top: `${gameController.food.y * gameController.gridSize}px`,
           width: `${gameController.gridSize}px`,
           height: `${gameController.gridSize}px`
         }">
           <div class="food-inner"></div>
+        </div>
+
+        <!-- 石头 -->
+        <div v-for="(stone, index) in gameController.stones" :key="`stone-${index}`" class="stone" :style="{
+          left: `${stone.x * gameController.gridSize}px`,
+          top: `${stone.y * gameController.gridSize}px`,
+          width: `${gameController.gridSize}px`,
+          height: `${gameController.gridSize}px`
+        }">
+          <div class="stone-inner"></div>
+        </div>
+
+        <!-- 预警标记 -->
+        <div v-if="gameController.currentWarning" class="warning" :style="{
+          left: `${gameController.currentWarning.x * gameController.gridSize}px`,
+          top: `${gameController.currentWarning.y * gameController.gridSize}px`,
+          width: `${gameController.gridSize}px`,
+          height: `${gameController.gridSize}px`
+        }">
+          <div class="warning-inner"></div>
         </div>
       </div>
 
@@ -114,132 +139,9 @@ import { ref, onMounted, onUnmounted } from 'vue';
 import { NButton, NModal, NIcon } from 'naive-ui';
 import { ArrowUpOutline, ArrowDownOutline, ArrowBackOutline, ArrowForwardOutline } from '@vicons/ionicons5';
 import { debugLog } from '../utils/debug';
-import { Snake, Food, Direction } from '../model/SnakeModel';
-// 游戏控制器类
-class GameController {
-  snake: Snake;
-  food: Food | null;
-  gridWidth: number;
-  gridHeight: number;
-  gridSize: number;
-  canvasWidth: number;
-  canvasHeight: number;
-  score: number;
-  level: number;
-  isRunning: boolean;
-  gameInterval: number | null;
-  onGameOver: () => void;
+import { Direction } from '../model/SnakeModel';
+import { GameController } from '../model/SnakeGameController';
 
-  constructor(gridSize: number, onGameOver: () => void) {
-    this.gridSize = gridSize;
-    this.gridWidth = 20;
-    this.gridHeight = 15;
-    this.canvasWidth = this.gridWidth * this.gridSize;
-    this.canvasHeight = this.gridHeight * this.gridSize;
-    this.snake = new Snake();
-    this.food = null;
-    this.score = 0;
-    this.level = 1;
-    this.isRunning = false;
-    this.gameInterval = null;
-    this.onGameOver = onGameOver;
-
-    this.generateFood();
-  }
-
-  // 开始游戏
-  startGame(): void {
-    debugLog(`开始游戏, 蛇的身体为${this.snake.body}`)
-    if (this.isRunning) return;
-
-    this.isRunning = true;
-    this.gameInterval = window.setInterval(() => this.gameLoop(), this.snake.speed);
-  }
-
-  // 暂停游戏
-  pauseGame(): void {
-    if (!this.isRunning) return;
-
-    this.isRunning = false;
-    if (this.gameInterval !== null) {
-      clearInterval(this.gameInterval);
-      this.gameInterval = null;
-    }
-  }
-
-  // 重置游戏
-  resetGame(): void {
-    this.pauseGame();
-    this.snake = new Snake();
-    this.generateFood();
-    this.score = 0;
-    this.level = 1;
-    this.snake.speed = 200;
-  }
-
-  // 游戏主循环
-  gameLoop(): void {
-    // 移动蛇并检查是否吃到食物
-    const ateFood = this.snake.move(this.food);
-
-    // 检查是否撞墙
-    if (this.checkCollisionWithWall()) {
-      this.gameOver();
-      return;
-    }
-
-    // 检查是否撞到自己
-    if (this.snake.checkCollisionWithSelf()) {
-      this.gameOver();
-      return;
-    }
-
-    // 如果吃到食物，生成新的食物并增加分数
-    if (ateFood) {
-      this.generateFood();
-      this.increaseScore();
-    }
-  }
-
-  // 生成食物
-  generateFood(): void {
-    this.food = Food.generateFood(this.snake, this.gridWidth, this.gridHeight);
-  }
-
-  // 检查是否撞墙
-  checkCollisionWithWall(): boolean {
-    const head = this.snake.body[0];
-    return (
-      head.x < 0 ||
-      head.y < 0 ||
-      head.x >= this.gridWidth ||
-      head.y >= this.gridHeight
-    );
-  }
-
-  // 增加分数
-  increaseScore(): void {
-    this.score += 10;
-
-    // 每50分升一级，提高速度
-    if (this.score % 50 === 0) {
-      this.level += 1;
-      this.snake.speed = Math.max(50, this.snake.speed - 20); // 最快速度为50ms
-
-      // 更新游戏速度
-      if (this.gameInterval !== null) {
-        clearInterval(this.gameInterval);
-        this.gameInterval = window.setInterval(() => this.gameLoop(), this.snake.speed);
-      }
-    }
-  }
-
-  // 游戏结束
-  gameOver(): void {
-    this.pauseGame();
-    this.onGameOver();
-  }
-}
 
 // 组件逻辑
 const gameCanvas = ref<HTMLElement | null>(null);
@@ -718,6 +620,68 @@ const handleResetGame = () => {
 
   .instructions-content {
     font-size: 0.9rem;
+  }
+}
+
+.food-grow {
+  background: radial-gradient(circle, #2ecc71, #27ae60);
+}
+
+.food-shrink {
+  background: radial-gradient(circle, #e74c3c, #c0392b);
+}
+
+.food-slow {
+  background: radial-gradient(circle, #3498db, #2980b9);
+}
+
+.food-fast {
+  background: radial-gradient(circle, #9b59b6, #8e44ad);
+}
+
+.stone {
+  position: absolute;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1;
+}
+
+.stone-inner {
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle, #7f8c8d, #2c3e50);
+  border-radius: 3px;
+  box-shadow: 0 0 15px rgba(44, 62, 80, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.warning {
+  position: absolute;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1;
+  animation: blink 1s infinite alternate;
+}
+
+.warning-inner {
+  width: 80%;
+  height: 80%;
+  background-color: rgba(231, 76, 60, 0.7);
+  border-radius: 50%;
+  box-shadow: 0 0 15px rgba(231, 76, 60, 0.7);
+}
+
+@keyframes blink {
+  from {
+    opacity: 0.3;
+    transform: scale(0.8);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1.2);
   }
 }
 </style>

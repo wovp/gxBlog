@@ -35,7 +35,7 @@ export class Snake {
 
     // 移动蛇
     move(food: Food | null): boolean {
-        debugLog(`移动蛇`)
+        // debugLog(`移动蛇`)
         // 更新方向
         this.direction = this.nextDirection;
 
@@ -72,14 +72,19 @@ export class Snake {
         const ateFood = head.x === food.x && head.y === food.y;
 
         if (ateFood) {
-            // 根据食物类型增加不同长度
-            if (food.style < 10) {
-                this.growByFoodType(food.style);
-            }
-            // 处理速度
-            else if (food.style < 20) {
-                // 蛇身翻倍
-                this.body = this.body.concat(this.body);
+            switch (food.type) {
+                case FoodType.GROW:
+                    this.growByFoodType(food.degree);
+                    break;
+                case FoodType.SHRINK:
+                    this.shrinkByFoodType(food.degree);
+                    break;
+                case FoodType.SLOW:
+                    this.decreaseSpeed(food.degree);
+                    break;
+                case FoodType.FAST:
+                    this.increaseSpeed(food.degree);
+                    break;
             }
 
         } else {
@@ -105,6 +110,40 @@ export class Snake {
             this.body.push({ ...tail });
         }
     }
+    // 根据食物类型减少蛇的长度
+    private shrinkByFoodType(foodStyle: number): void {
+        // 计算减少的节数 (取绝对值)
+        const segmentsToRemove = Math.abs(foodStyle);
+
+        debugLog(`吃到减少食物, 类型: ${foodStyle}, 减少 ${segmentsToRemove} 节`)
+
+        // 确保不会减少到0长度
+        const segmentsToKeep = Math.max(1, this.body.length - segmentsToRemove);
+        this.body = this.body.slice(0, segmentsToKeep);
+    }
+
+    // 减少速度
+    private decreaseSpeed(foodStyle: number): void {
+        // 根据食物类型计算减速比例 (11-20 转换为 1.1-2.0 倍减速)
+        const slowdownFactor = 1 + (foodStyle - 10) / 10;
+        const newSpeed = Math.min(1000, this.speed * slowdownFactor); // 最大减速到1000ms
+
+        debugLog(`吃到减速食物, 类型: ${foodStyle}, 速度变为 ${newSpeed}ms`)
+
+        this.speed = newSpeed;
+    }
+
+    // 增加速度
+    private increaseSpeed(foodStyle: number): void {
+        // 根据食物类型计算加速比例 (21-30 转换为 0.1-0.9 倍加速)
+        const speedupFactor = 1 - (foodStyle - 20) / 20;
+        const newSpeed = Math.max(50, this.speed * speedupFactor); // 最小加速到50ms
+
+        debugLog(`吃到加速食物, 类型: ${foodStyle}, 速度变为 ${newSpeed}ms`)
+
+        this.speed = newSpeed;
+    }
+
 
     // 改变方向
     changeDirection(newDirection: Direction): void {
@@ -132,12 +171,14 @@ export class Snake {
 export class Food {
     x: number;
     y: number;
-    style: number;
+    degree: number;
+    type: FoodType; // 食物类型
 
-    constructor(x: number, y: number) {
+    constructor(x: number, y: number, degree: number, type: FoodType) {
         this.x = x;
         this.y = y;
-        this.style = Math.floor(Math.random() * 3); // 随机生成食物样式
+        this.degree = degree;
+        this.type = type;
     }
 
     // 生成新的食物位置
@@ -153,6 +194,40 @@ export class Food {
             validPosition = !snake.body.some(segment => segment.x === x && segment.y === y);
         }
 
-        return new Food(x, y);
+        // 随机生成食物类型和样式
+        const randomType = Math.random();
+        let degree: number;
+        let type: FoodType;
+
+        if (randomType < 0.6) {
+            // 60% 概率是普通食物 (增加长度)
+            degree = Math.floor(Math.random() * 11); // 0-10
+            type = FoodType.GROW;
+        }
+        else if (randomType < 0.7) {
+            // 10% 概率是减少长度食物
+            degree = -Math.floor(Math.random() * 10) - 1; // -10 到 -1
+            type = FoodType.SHRINK;
+        }
+        else if (randomType < 0.85) {
+            // 15% 概率是减速食物
+            degree = Math.floor(Math.random() * 10) + 11; // 11-20
+            type = FoodType.SLOW;
+        }
+        else {
+            // 15% 概率是加速食物
+            degree = Math.floor(Math.random() * 10) + 21; // 21-30
+            type = FoodType.FAST;
+        }
+
+        return new Food(x, y, degree, type);
     }
+}
+
+// 食物类型枚举
+export enum FoodType {
+    GROW = 'grow',      // 增加长度
+    SHRINK = 'shrink',  // 减少长度
+    SLOW = 'slow',      // 减少速度
+    FAST = 'fast',      // 增加速度
 }
