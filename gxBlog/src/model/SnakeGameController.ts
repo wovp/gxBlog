@@ -1,5 +1,5 @@
 import { debugLog } from "../utils/debug";
-import { Food, type Position, Snake } from "./SnakeModel";
+import { Food, type Position, Snake, FoodType } from "./SnakeModel";
 
 // 游戏控制器类
 export class GameController {
@@ -23,13 +23,20 @@ export class GameController {
     animationFrameId: number | null;
     lastFrameTime: number | null;
 
+    // 食物碰撞回调函数
+    foodCollisionCallback: ((foodType: FoodType) => void) | null = null;
 
     onGameOver: () => void;
 
+    // 设置食物碰撞回调函数
+    set setFoodCollisionCallback(callback: (foodType: FoodType) => void) {
+        this.foodCollisionCallback = callback;
+    }
+
     constructor(gridSize: number, onGameOver: () => void) {
         this.gridSize = gridSize;
-        this.gridWidth = 20;
-        this.gridHeight = 15;
+        this.gridWidth = 40;
+        this.gridHeight = 40;
         this.canvasWidth = this.gridWidth * this.gridSize;
         this.canvasHeight = this.gridHeight * this.gridSize;
         this.snake = new Snake();
@@ -91,9 +98,10 @@ export class GameController {
         if (!this.isRunning) return;
 
         this.isRunning = false;
-        if (this.gameInterval !== null) {
-            clearInterval(this.gameInterval);
-            this.gameInterval = null;
+        // 取消动画帧
+        if (this.animationFrameId !== null) {
+            cancelAnimationFrame(this.animationFrameId);
+            this.animationFrameId = null;
         }
 
         // 暂停石头计时器
@@ -118,13 +126,27 @@ export class GameController {
 
     // 重置游戏
     resetGame(): void {
+        // 先暂停游戏
         this.pauseGame();
+
+        // 重置游戏状态
         this.snake = new Snake();
         this.score = 0;
         this.level = 1;
         this.stones = [];
         this.currentWarning = null;
+
+        // 重置食物
         this.food = null;
+        this.generateFood();
+
+        // 设置加速结束回调
+        this.snake.setSpeedUpEndCallback(() => {
+            this.onSnakeSpeedUpEnd();
+        });
+
+        // 重置游戏循环状态
+        this.lastFrameTime = null;
     }
     // -------------------------------------石头障碍部分------------------------------------//
     // 生成石头
@@ -229,7 +251,12 @@ export class GameController {
             }
 
             // 如果吃到食物，生成新的食物并增加分数
-            if (ateFood) {
+            if (ateFood && this.food) {
+                // 调用食物碰撞回调函数
+                if (this.foodCollisionCallback) {
+                    this.foodCollisionCallback(this.food.type);
+                }
+
                 this.generateFood();
                 this.increaseScore();
             }
