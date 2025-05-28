@@ -70,15 +70,14 @@ export class Snake {
     }
 
     // 移动蛇
-    move(food: Food | null): boolean {
-        // debugLog(`移动蛇`)
+    move(): void {
         // 更新方向
         this.direction = this.nextDirection;
 
-        // 获取头部位置
+        // 获取蛇头位置
         const head = { ...this.body[0] };
 
-        // 根据方向移动头部
+        // 根据方向移动蛇头
         switch (this.direction) {
             case Direction.UP:
                 head.y -= 1;
@@ -94,90 +93,64 @@ export class Snake {
                 break;
         }
 
-        // 将新头部添加到身体前面
+        // 将新的头部添加到身体的前面
         this.body.unshift(head);
-        // 检查并处理食物碰撞
-        return this.handleFoodCollision(food);
+
+        // 如果没有吃到食物，移除尾部
+        // 注意：现在食物碰撞检测由GameController处理
+        this.body.pop();
+
+        // 更新加速能量
+        this.updateSpeedUpEnergy();
     }
 
-    // 处理食物碰撞
-    private handleFoodCollision(food: Food | null): boolean {
-        if (!food) return false;
-
-        const head = this.body[0];
-        const ateFood = head.x === food.x && head.y === food.y;
-
-        if (ateFood) {
-            switch (food.type) {
-                case FoodType.GROW:
-                    this.growByFoodType(food.degree);
-                    break;
-                case FoodType.SHRINK:
-                    this.shrinkByFoodType(food.degree);
-                    break;
-                case FoodType.SLOW:
-                    this.decreaseSpeed(food.degree);
-                    break;
-                case FoodType.FAST:
-                    this.increaseSpeed(food.degree);
-                    break;
-            }
-
-        } else {
-            // 如果没有吃到食物，移除尾部
-            this.body.pop();
-        }
-
-        return ateFood;
-    }
-
-    // 根据食物类型增加蛇的长度
-    private growByFoodType(foodStyle: number): void {
-        // 根据食物样式决定增长节数
-        const segmentsToAdd = foodStyle + 1; // style 0 = 1节, style 1 = 2节, style 2 = 3节
-
-        debugLog(`吃到食物, 类型: ${foodStyle}, 增加 ${segmentsToAdd} 节`)
-
-        // 获取尾部位置
+    // 增加长度
+    grow(degree: number): void {
+        // 增加长度，不需要移除尾部
+        // 由于在move方法中已经移除了尾部，这里需要添加回来
         const tail = this.body[this.body.length - 1];
+
+        // 根据食物样式决定增长节数
+        const segmentsToAdd = degree + 1; // degree 0 = 1节, degree 1 = 2节, degree 2 = 3节
 
         // 复制尾部并添加到蛇身
         for (let i = 0; i < segmentsToAdd; i++) {
             this.body.push({ ...tail });
         }
-    }
-    // 根据食物类型减少蛇的长度
-    private shrinkByFoodType(foodStyle: number): void {
-        // 计算减少的节数 (取绝对值)
-        const segmentsToRemove = Math.abs(foodStyle);
 
-        debugLog(`吃到减少食物, 类型: ${foodStyle}, 减少 ${segmentsToRemove} 节`)
-
-        // 确保不会减少到0长度
-        const segmentsToKeep = Math.max(1, this.body.length - segmentsToRemove);
-        this.body = this.body.slice(0, segmentsToKeep);
+        debugLog(`吃到增长食物，程度: ${degree}, 增加 ${segmentsToAdd} 节`);
     }
 
-    // 减少速度
-    private decreaseSpeed(foodStyle: number): void {
-        // 根据食物类型计算减速比例 (11-20 转换为 1.1-2.0 倍减速)
-        const slowdownFactor = 1 + (foodStyle - 10) / 10;
-        const newSpeed = Math.min(1000, this.baseSpeed * slowdownFactor); // 最大减速到1000ms
+    // 减少长度
+    shrink(degree: number): void {
+        // 减少长度，额外移除尾部
+        const shrinkAmount = degree;
+        // 确保蛇至少有3个部分
+        const maxShrink = Math.max(0, this.body.length - 3);
+        const actualShrink = Math.min(shrinkAmount, maxShrink);
 
-        debugLog(`吃到减速食物, 类型: ${foodStyle}, 速度变为 ${newSpeed}ms`)
-
-        this.adjustBaseSpeed(newSpeed);
+        for (let i = 0; i < actualShrink; i++) {
+            this.body.pop();
+        }
+        debugLog(`吃到缩短食物，程度: ${degree}, 实际缩短: ${actualShrink}`);
     }
 
-    // 增加速度
-    private increaseSpeed(foodStyle: number): void {
-        // 根据食物类型计算加速比例 (21-30 转换为 0.1-0.9 倍加速)
-        const speedupFactor = 1 - (foodStyle - 20) / 20;
-        const newSpeed = Math.max(50, this.baseSpeed * speedupFactor); // 最小加速到50ms
+    // 减速
+    slow(degree: number): void {
+        // 减速
+        const slowFactor = degree; // 11-20 映射到 1-10
+        const newSpeed = Math.min(this.baseSpeed + slowFactor * 10, 200); // 最大减速到200ms
+        this.currentSpeed = newSpeed;
+        debugLog(`吃到减速食物，程度: ${degree + 10}, 新速度: ${this.currentSpeed}ms`);
+    }
 
-        debugLog(`吃到加速食物, 类型: ${foodStyle}, 速度变为 ${newSpeed}ms`)
-
-        this.adjustBaseSpeed(newSpeed);
+    // 加速
+    speedUp(degree: number): void {
+        // 加速
+        const speedFactor = degree; // 21-30 映射到 1-10
+        const newFastSpeed = Math.max(this.baseSpeed - speedFactor * 5, 50); // 最小加速到50ms
+        this.currentSpeed = newFastSpeed;
+        debugLog(`吃到加速食物，程度: ${degree + 20}, 新速度: ${this.currentSpeed}ms`);
     }
 
     // 主动加速

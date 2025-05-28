@@ -4,7 +4,8 @@ import { Food, type Position, Snake, FoodType } from "./SnakeModel";
 // 游戏控制器类
 export class GameController {
     snake: Snake;
-    food: Food | null;
+    foods: Food[]; // 改为食物数组
+    foodTimer: number | null; // 食物生成计时器
     stones: Position[]; // 石头位置
     stoneTimer: number | null; // 石头计时器
     currentWarning: Position | null; // 当前预警位置
@@ -40,7 +41,8 @@ export class GameController {
         this.canvasWidth = this.gridWidth * this.gridSize;
         this.canvasHeight = this.gridHeight * this.gridSize;
         this.snake = new Snake();
-        this.food = null;
+        this.foods = []; // 初始化为空数组
+        this.foodTimer = null;
         this.score = 0;
         this.level = 1;
         this.isRunning = false;
@@ -57,6 +59,7 @@ export class GameController {
         this.animationFrameId = null;
         this.lastFrameTime = null;
 
+        // 生成第一个食物
         this.generateFood();
         // 设置加速结束回调
         this.snake.setSpeedUpEndCallback(() => {
@@ -91,6 +94,10 @@ export class GameController {
             this.scheduleRandomStone();
         }
 
+        // 如果没有食物定时器在运行，启动食物生成定时器
+        if (this.foodTimer === null) {
+            this.scheduleFoodGeneration();
+        }
     }
 
     // 暂停游戏
@@ -116,6 +123,12 @@ export class GameController {
             this.warningTimer = null;
         }
 
+        // 暂停食物生成定时器
+        if (this.foodTimer !== null) {
+            clearTimeout(this.foodTimer);
+            this.foodTimer = null;
+        }
+
         // 取消动画帧
         if (this.animationFrameId !== null) {
             cancelAnimationFrame(this.animationFrameId);
@@ -137,7 +150,7 @@ export class GameController {
         this.currentWarning = null;
 
         // 重置食物
-        this.food = null;
+        this.foods = [];
         this.generateFood();
 
         // 设置加速结束回调
@@ -229,8 +242,8 @@ export class GameController {
             // 更新上一帧时间
             this.lastFrameTime = currentTime;
 
-            // 移动蛇并检查是否吃到食物
-            const ateFood = this.snake.move(this.food);
+            // 移动蛇
+            this.snake.move(); // 先移动蛇，然后单独检查食物碰撞
 
             // 检查是否撞墙
             if (this.checkCollisionWithWall()) {
@@ -250,22 +263,33 @@ export class GameController {
                 return;
             }
 
-            // 如果吃到食物，生成新的食物并增加分数
-            if (ateFood && this.food) {
-                // 调用食物碰撞回调函数
-                if (this.foodCollisionCallback) {
-                    this.foodCollisionCallback(this.food.type);
-                }
-
-                this.generateFood();
-                this.increaseScore();
-            }
+            // 检查是否吃到食物
+            this.checkFoodCollisions();
         }
     }
 
     // 生成食物
     generateFood(): void {
-        this.food = Food.generateFood(this.snake, this.gridWidth, this.gridHeight);
+        const newFood = Food.generateFood(this.snake, this.gridWidth, this.gridHeight);
+        this.foods.push(newFood);
+        debugLog(`生成新食物，当前食物数量: ${this.foods.length}`);
+    }
+
+    // 安排食物生成
+    scheduleFoodGeneration(): void {
+        // 每5秒生成一个新食物
+        this.foodTimer = setTimeout(() => {
+            if (!this.isRunning) {
+                // 如果游戏已暂停，不生成新食物
+                return;
+            }
+
+            // 生成新食物
+            this.generateFood();
+
+            // 继续安排下一次食物生成
+            this.scheduleFoodGeneration();
+        }, 5000); // 5秒间隔
     }
 
     // 检查是否撞墙
@@ -296,7 +320,7 @@ export class GameController {
             const newBaseSpeed = Math.max(50, this.snake.baseSpeed - 10); // 每级减少10ms，最低50ms
             this.snake.adjustBaseSpeed(newBaseSpeed);
 
-            debugLog(`升级! 等级: ${this.level}, 蛇的基础速度: ${this.snake.baseSpeed}ms, 当前速度: ${this.snake.currentSpeed}ms`);
+            debugLog(`升级! 等级: ${this.level}, 蛇的基础速度: ${this.snake.baseSpeed} ms, 当前速度: ${this.snake.currentSpeed} ms`);
             // 更新游戏速度
             if (this.gameInterval !== null) {
                 // 安全地更新游戏循环
@@ -325,6 +349,59 @@ export class GameController {
 
         }
     }
+    // 检查食物碰撞
+    // TODO: 待优化，性能有问题
+    checkFoodCollisions(): void {
+        const head = this.snake.body[0];
+
+        // 遍历所有食物，检查是否有碰撞
+        for (let i = this.foods.length - 1; i >= 0; i--) {
+            const food = this.foods[i];
+
+            // 检查蛇头是否与食物碰撞
+            if (head.x === food.x && head.y === food.y) {
+                // 处理食物效果
+                this.handleFoodEffect(food);
+
+                // 从数组中移除被吃掉的食物
+                this.foods.splice(i, 1);
+
+                // 增加分数
+                this.increaseScore();
+            }
+        }
+    }
+
+    // 处理食物效果
+    handleFoodEffect(food: Food): void {
+        // 根据食物类型应用不同效果
+        switch (food.type) {
+            case FoodType.GROW:
+                // 增加长度
+                this.snake.grow(food.degree);
+                break;
+            case FoodType.SHRINK:
+                // 减少长度
+                this.snake.shrink(Math.abs(food.degree));
+                break;
+            case FoodType.SLOW:
+                // 减速
+                this.snake.slow(food.degree - 10);
+                break;
+            case FoodType.FAST:
+                // 加速
+                this.snake.speedUp(food.degree - 20);
+                break;
+        }
+
+        // 调用食物碰撞回调函数
+        if (this.foodCollisionCallback) {
+            this.foodCollisionCallback(food.type);
+        }
+
+        debugLog(`吃到食物类型: ${food.type}, 程度: ${food.degree} `);
+    }
+
     // 游戏结束
     gameOver(): void {
         this.pauseGame();
